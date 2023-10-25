@@ -20,4 +20,4 @@ In order to run these files:
   ```
 
 * Clone the repository
-* Open the folder for the repository in the terminal and run `lake build`. Keep in mind that this will compile `mathlib4`, so it will take a while.
+* Open the folder for the repository in the terminal and run `lake build`. Keep in mind that this will compile `mathlib4`, so it will take a while. It is preferred that `lake build` is run on a terminal with VSCode conflicts. Otherwise, VSCode may be using some of the files that lake wants to use and it will error out.
