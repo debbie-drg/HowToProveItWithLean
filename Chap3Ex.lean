@@ -694,7 +694,8 @@ theorem Like_Exercise_3_7_5 (U : Type) (F : Set (Set U))
     (h1 : 𝒫 (⋃₀ F) ⊆ ⋃₀ { 𝒫 A | A ∈ F }) :
     ∃ (A : Set U), A ∈ F ∧ ∀ (B : Set U), B ∈ F → B ⊆ A := by
   have h2 : ⋃₀ F ∈ 𝒫 (⋃₀ F) := by
-    define; fix a; assume h; exact h
+    have h3 : ⋃₀ F ⊆ ⋃₀ F := by rfl
+    exact Set.mem_powerset h3
   have h3 :  ⋃₀ F ∈ ⋃₀ { 𝒫 A | A ∈ F } := h1 h2
   define at h3
   obtain (B : Set (Set U)) (h4 : B ∈ {x : Set (Set U) | ∃ (A : Set U), A ∈ F ∧ 𝒫 A = x} ∧ ⋃₀ F ∈ B) from h3
