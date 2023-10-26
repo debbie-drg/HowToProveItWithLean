@@ -2,6 +2,8 @@ import HTPILib.HTPIDefs
 namespace HTPI
 
 
+-- Chapter 3: Proofs --
+
 -- Let us begin introducing proofs in term mode
 
 theorem extremely_easy (P : Prop) (h : P) : P := h
@@ -31,7 +33,7 @@ interpret (h2 h1) h3, which makes no sense.
 /-
 Assume we want to prove `P → Q`. We can do so in one of two ways:
 1. Assume `P` and prove `Q`.
-2. Assume `Q` is false and prove that `P` is false. 
+2. Assume `Q` is false and prove that `P` is false.
 
 If our goal is `P → Q`, doing assume will change the goal to `Q` and
 assume `P`. We make use of this in the next proof.
@@ -46,8 +48,8 @@ theorem two_imp (P Q R : Prop)
   done
 
 /-
-We can clearly prove `P → ¬R` but we need to prove `R → ¬P` instead, so 
-we use `contrapos` to get the contrapositive. This will immediately 
+We can clearly prove `P → ¬R` but we need to prove `R → ¬P` instead, so
+we use `contrapos` to get the contrapositive. This will immediately
 chance the goal to `P → ¬R`.
 
 If we have `h`, we can also write `contrapos at h`.
@@ -59,7 +61,7 @@ theorem two_imp₂ (P Q R : Prop)
   contrapos at h2
   assume h3 : R
   have h4 : ¬Q := h2 h3
-  show ¬P from h1 h4 
+  show ¬P from h1 h4
   done
 
 /-
@@ -67,8 +69,8 @@ We thus have a proof where we use the contrapositive of the hypotheses
 instead of doing so in the goal.
 -/
 
-/- 
-Since our goal is `R → ¬P`, we can also assume `R`, and then assume `P` 
+/-
+Since our goal is `R → ¬P`, we can also assume `R`, and then assume `P`
 and reach a contradiction.
 -/
 
@@ -84,7 +86,7 @@ theorem two_imp₃ (P Q R : Prop)
 /-
 `¬Q` and `Q → False` are logically equivalent, and Lean uses the second
 one. That means that if we have `h1 : ¬Q` and `h2 : Q`, `h1 h2` is a proof
-of `False`. 
+of `False`.
 -/
 
 /-
@@ -100,7 +102,7 @@ In a similar manner, we can use the following tactics:
                      `P ∧ Q` is changed to `¬(P → ¬Q)`.
 * `double_neg`:        `¬¬P` is changed to `P`.
 * `bicond_neg`:   `¬(P ↔ Q)` is changed to `¬P ↔ Q`.
-                     `P ↔ Q` is changed to `¬(¬P ↔ Q)`.   
+                     `P ↔ Q` is changed to `¬(¬P ↔ Q)`.
 -/
 
 -- All of these tactics can be used at a given proof by using `at h`.
@@ -129,7 +131,7 @@ it changes `¬a ∈ B \ C` for `¬(a ∈ B ∧ ¬a ∈ C)`.
 /-
 This proof does not use the fact that the sets are natural numbers. If
 we want to make it fully general, Lean will ask us to still declare a \
-`Type` in which elements in the set live. We can use a varialbe to 
+`Type` in which elements in the set live. We can use a varialbe to
 stand for any type, like so.
 -/
 
@@ -167,9 +169,9 @@ theorem Example_3_2_4_v4 (P Q R : Prop)
   show R from h h3 h4
   done
 
-/- 
+/-
 If we have a goal of `Q` and `h : P → Q`, we can use `apply h` and change
-the goal to `P`. 
+the goal to `P`.
 -/
 
 theorem Like_Example_3_2_5
@@ -183,7 +185,7 @@ theorem Like_Example_3_2_5
   done
 
 /-
-Now we start introducing (existential and universal) quantifiers. 
+Now we start introducing (existential and universal) quantifiers.
 
 Lean has types of predicates. `Pred U` is the type of predicates that apply
 to objects of type `U`. We may want to prove something like `∃x P(x)`, meaning
@@ -231,7 +233,7 @@ in the following ways, by negating:
 
 example (U : Type) (A B C : Set U) (h1 : A ⊆ B ∪ C)
     (h2 : ∀ (x : U), x ∈ A → x ∉ B) : A ⊆ C := by
-  fix y : U -- goal changes to `y ∈ A → y ∈ C`  
+  fix y : U -- goal changes to `y ∈ A → y ∈ C`
   assume h3 : y ∈ A
   have h4 : ¬y ∈ B := h2 y h3
   define at h1 -- changes union for definition
@@ -257,7 +259,7 @@ If we have `a : U` and `h : P a`, then we can infer `∃ (x : U), P x` by using
 
 /-
 To use a given of form `h : ∃ (x : U), P x`, we use
-`obtain (u : U) (h' P u) from h`. 
+`obtain (u : U) (h' P u) from h`.
 -/
 
 example (U : Type) (P Q : Pred U)
@@ -291,18 +293,18 @@ theorem Example_3_3_5 (U : Type) (B : Set U)
   done
 
 /-
-We now move on to conjunctions and biconditionals. 
-If `h1 : P` and `h2 : Q`, then `And.intro h1 h2 : P ∧ Q`. We can also write 
-`⟨h1, h2⟩`. 
+We now move on to conjunctions and biconditionals.
+If `h1 : P` and `h2 : Q`, then `And.intro h1 h2 : P ∧ Q`. We can also write
+`⟨h1, h2⟩`.
 
-On the other hand, if we have `h : P ∧ Q`, we can get `h.left` as a proof of 
+On the other hand, if we have `h : P ∧ Q`, we can get `h.left` as a proof of
 `P` and `h.right` as a proof of `Q`. If we have a goal like `P ∧ Q`, we can
 write `apply And.intro` and we will split the goal in two. One goal will
 be `P` and the other will be `Q`. We can now independently prove each of the
 goals, which can potentially simplify the code if moving towards one
 goal moves us away from the other.
 
-We can also use this syntax for intersections. Namely, if `h : a ∈ A ∩ B`, 
+We can also use this syntax for intersections. Namely, if `h : a ∈ A ∩ B`,
 `h.left : a ∈ A` and `h.right : a ∈ B`.
 -/
 
@@ -322,12 +324,12 @@ theorem Like_Example_3_4_1 (U : Type)
     exact And.intro h3.right h4
 
 /-
-Remember that `P ↔ Q` is equivalent to `(P → Q) ∧ (Q → P)`. Thus, what 
+Remember that `P ↔ Q` is equivalent to `(P → Q) ∧ (Q → P)`. Thus, what
 we discussed so far can immediately be used to prove equivalences.
 
 If `h1 : P → Q` and `h2 : Q → P`, then `Iff.intro h1 h2 : P ↔ Q`.
 And conversely, `apply Iff.intro` will convert a goal of `P ↔ Q` into
-two goals `P → Q` and `Q → P`. 
+two goals `P → Q` and `Q → P`.
 
 On the other hand, if `h : P ↔ Q`, then `h.ltr : P → Q` and `h.rtl : Q → P`.
 Here, `ltr` is `left to right`; and `rtl` is `right to left`.
@@ -344,7 +346,7 @@ example (U : Type) (P Q : Pred U)
   · assume h2 : ∃ (x : U), Q x
     obtain (u : U) (h3 : Q u) from h2
     show ∃ (x : U), P x from Exists.intro u ((h1 u).rtl h3)
-    done 
+    done
   done
 
 /-
@@ -355,7 +357,7 @@ a proof.
 
 theorem Example_3_4_5 (U : Type)
     (A B C : Set U) : A ∩ (B \ C) = (A ∩ B) \ C := by
-  apply Set.ext -- set extensionality: two sets are equal iff they have the 
+  apply Set.ext -- set extensionality: two sets are equal iff they have the
   -- same elements.
   fix x : U
   show x ∈ A ∩ (B \ C) ↔ x ∈ (A ∩ B) \ C from
@@ -365,7 +367,7 @@ theorem Example_3_4_5 (U : Type)
       _ ↔ x ∈ (A ∩ B) \ C := Iff.refl _
   done
 
-#check Iff.refl 
+#check Iff.refl
 
 /-
 `Iff.refl` is just `(a : Prop) : a ↔ a`. However, Lean is smart enough to
@@ -378,16 +380,16 @@ Inference of variables is also used in the remaining lines.
 -/
 
 /-
-We move on to disjunctions. 
+We move on to disjunctions.
 
-If we want to use `P ∨ Q` for a proof, one common way is to do so by 
+If we want to use `P ∨ Q` for a proof, one common way is to do so by
 cases. This means we first assume `P`, complete the proof, and we then do
 the same assuming `Q`. This is done with the `by_cases` tactic.
 
 If we have `h : P ∨ Q`, we do `by_cases on h`, which causes a new hypothesis
 `h : P` as part of a new goal, and when completed moves on to `h : Q`.
-If we want to retain the initial `h` we cando `by_cases on h with h1` and we 
-will have `h1 : P` and later `h1 : Q`. Or we can even do 
+If we want to retain the initial `h` we cando `by_cases on h with h1` and we
+will have `h1 : P` and later `h1 : Q`. Or we can even do
 `by_cases on h with h1, h2` and so we will first have `h1 : P` and later `h2 : Q`.
 
 If the goal is of form `P ∨ Q`, it is enough to produce a proof of either
@@ -409,15 +411,15 @@ theorem Example_3_5_2
   · apply Or.inl
     define
     exact ⟨h2, h3⟩
-  · apply Or.inr h3 
+  · apply Or.inr h3
   done
 
 /-
-Another way of proving a goal of form `P ∨ Q` is to assume `¬P` and 
-prove `Q` or assume `¬Q` and prove `P`. 
+Another way of proving a goal of form `P ∨ Q` is to assume `¬P` and
+prove `Q` or assume `¬Q` and prove `P`.
 
 This is done with `or_left with h` and `or_right with h`.
--/ 
+-/
 
 example (U : Type) (A B C : Set U)
     (h1 : A \ B ⊆ C) : A ⊆ B ∪ C := by
@@ -429,7 +431,7 @@ example (U : Type) (A B C : Set U)
   done
 
 /-
-Also note that `P ∨ Q` is equivalent to both `¬P → Q` and `¬Q → P`. Thus, 
+Also note that `P ∨ Q` is equivalent to both `¬P → Q` and `¬Q → P`. Thus,
 if we are given `P ∨ Q` and prove `¬P`, we can prove `Q`; and if we have
 `P ∨ Q` and `¬Q`, we can conclude `P`.
 
@@ -453,7 +455,7 @@ example
   exact h4
   done
 
-/- 
+/-
 Another way of proving this
 -/
 
@@ -469,14 +471,14 @@ example
     apply Exists.intro a
     exact ⟨h3, h6⟩
   disj_syll h4 h5
-  exact h4 
+  exact h4
   done
 
 
 /-
-Now we review existence and uniqueness. Namely, assume that we have a 
+Now we review existence and uniqueness. Namely, assume that we have a
 goal `∃! (x : U), P x`.
-* We can use `define` to rewrite it as 
+* We can use `define` to rewrite it as
     `∃ (x : U), P x ∧ ∀ (x_1 : U), P x_1 → x_1 = x`
   and use other techniques we've seen so far.
 * Using that `P ∧ Q → R` is equivalent to `P → Q → R`, we can also prove
@@ -521,7 +523,7 @@ theorem union_comm {U : Type} (X Y : Set U) :
   show x ∈ X ∨ x ∈ Y ↔ x ∈ Y ∪ X from or_comm
   done
 
-/- 
+/-
 Finally we prove the result.
 -/
 
@@ -540,18 +542,18 @@ theorem Example_3_6_2 (U : Type) :
     have h4 : D ∪ C = C := h2 C
     show C = D from
       calc C
-        _ = D ∪ C := h4.symm 
+        _ = D ∪ C := h4.symm
         _ = C ∪ D := union_comm D C
         _ = D := h3
   done
 
-/- 
+/-
 Now, what if we want to use a uniqueness of existence result?
 If we have `∃! (x : U), P x` we can assert the existence of an object
-`a` for which `P a` is true, and also a proof of 
+`a` for which `P a` is true, and also a proof of
 `∀ (x_1 x_2 : U), P x_1 → P x_2 → x_1 = x2`.
 
-Particularly, from `h : ∃! (x : U), P x`, then the tactic 
+Particularly, from `h : ∃! (x : U), P x`, then the tactic
 `obtain (a : U) (h1 : P a) (h2 : ∀ (x_1 x_2 : U), P x_1 → P x_2 → x_1 = x_2) from h`.
 This will introduce a new variable `a` of type `U` and new givens
 `(h1 : P a)` and `(h2 : ∀ (x_1 x_2 : U), P x_1 → P x_2 → x_1 = x_2)`.
@@ -654,10 +656,10 @@ theorem Theorem_3_4_7 :
   done
 
   /-
-  If a result is of the form `h : A ↔ B`, `rw [h]` will replace occurences of 
-  `A` with `B`. If we want to do it the other way around (right to left), 
+  If a result is of the form `h : A ↔ B`, `rw [h]` will replace occurences of
+  `A` with `B`. If we want to do it the other way around (right to left),
   we can do so by writting `rw [← h]`. This is what we are doing above with
-  `rw [← mul_assoc]`. 
+  `rw [← mul_assoc]`.
   -/
 
   /- The calc proof can be made significantly shorter by using the `ring`
