@@ -295,19 +295,39 @@ theorem Exercise_4_3_20 {A : Type} (R : BinRel A) (S : BinRel (Set A))
 --You might not be able to complete this proof
 theorem Exercise_4_3_13b {A : Type}
     (R1 R2 : BinRel A) (h1 : symmetric R1) (h2 : symmetric R2) :
-    symmetric (RelFromExt ((extension R1) ∪ (extension R2))) := sorry
+    symmetric (RelFromExt ((extension R1) ∪ (extension R2))) := by
+  define; fix x; fix y
+  assume h3 : RelFromExt (extension R1 ∪ extension R2) x y
+  define at h3
+  by_cases on h3
+  · have h4 : (y, x) ∈ extension R1 := h1 x y h3
+    define; left; exact h4
+  · have h4 : (y, x) ∈ extension R2 := h2 x y h3
+    define; right; exact h4
+  done
 
 -- 9.
 --You might not be able to complete this proof
 theorem Exercise_4_3_13c {A : Type}
     (R1 R2 : BinRel A) (h1 : transitive R1) (h2 : transitive R2) :
     transitive (RelFromExt ((extension R1) ∪ (extension R2))) := sorry
+/-
+This result is false. Imagine we have a set of three elements
+`{x, y, z}`, `R1` only relating `x` and `y`, and `R2` only relating `y` and `z`.
+Then `R1 ∪ R2` relates `x` with `y` and `y` with `z` but does not relate `x`
+with `z`.
+-/
 
 -- 10.
 --You might not be able to complete this proof
 theorem Exercise_4_3_19 {A : Type} (R : BinRel A) (S : BinRel (Set A))
     (h : ∀ (X Y : Set A), S X Y ↔ ∃ (x y : A), x ∈ X ∧ y ∈ Y ∧ R x y) :
     transitive R → transitive S := sorry
+/-
+Also false. The elements in `Y` can be different between different sets,
+thus transitivity cannot be applied. In fact, the same relation as before with
+`X = {x}`, `Y = {y}` and `Z = {z}` works here.
+-/
 
 /- Section 4.4 -/
 -- 1.
