@@ -179,37 +179,119 @@ theorem Exercise_4_2_14d {A B C : Type}
 /- Section 4.3 -/
 -- 1.
 example :
-    elementhood Int 6 { n : Int | ∃ (k : Int), n = 2 * k } := sorry
+    elementhood Int 6 { n : Int | ∃ (k : Int), n = 2 * k } := by
+  apply Exists.intro 3
+  ring
+  done
 
 -- 2.
 theorem Theorem_4_3_4_1 {A : Type} (R : BinRel A) :
-    reflexive R ↔ { (x, y) : A × A | x = y } ⊆ extension R := sorry
+    reflexive R ↔ { (x, y) : A × A | x = y } ⊆ extension R := by
+  apply Iff.intro
+  · assume h1 : reflexive R
+    define at h1
+    define
+    fix (a, a'); assume h2 : (a, a') ∈ { (a, a') : A × A | a = a'}
+    define at h2
+    rw [← h2]
+    exact h1 a
+  · assume h1 : { (x, y) : A × A | x = y } ⊆ extension R
+    define at h1
+    define; fix a
+    have h2 : (a, a) ∈ { (x, y) : A × A | x = y } := by rfl
+    have h3 : (a, a) ∈ extension R := h1 h2
+    exact h3
+  done
 
 -- 3.
 theorem Theorem_4_3_4_3 {A : Type} (R : BinRel A) :
     transitive R ↔
-      comp (extension R) (extension R) ⊆ extension R := sorry
+      comp (extension R) (extension R) ⊆ extension R := by
+  apply Iff.intro
+  · assume h1 : transitive R
+    define at h1
+    define
+    fix (a, a')
+    assume h2 : (a, a') ∈ comp (extension R) (extension R)
+    define at h2
+    obtain (a'' : A) (h3 :  (a, a'') ∈ extension R ∧ (a'', a') ∈ extension R) from h2
+    have h4 : R a a'' := h3.left
+    have h5 : R a'' a' := h3.right
+    exact h1 a a'' a' h4 h5
+  · assume h1 : comp (extension R) (extension R) ⊆ extension R
+    define
+    fix x; fix y; fix z
+    assume h2 : R x y
+    assume h3 : R y z
+    define at h1
+    have h4 : (x, z) ∈ comp (extension R) (extension R) := by
+      define; apply Exists.intro y
+      exact And.intro h2 h3
+    exact h1 h4
+  done
 
 -- 4.
 theorem Exercise_4_3_12a {A : Type} (R : BinRel A) (h1 : reflexive R) :
-    reflexive (RelFromExt (inv (extension R))) := sorry
+    reflexive (RelFromExt (inv (extension R))) := by
+  define; fix a
+  define
+  exact h1 a
+  done
 
 -- 5.
 theorem Exercise_4_3_12c {A : Type} (R : BinRel A) (h1 : transitive R) :
-    transitive (RelFromExt (inv (extension R))) := sorry
+    transitive (RelFromExt (inv (extension R))) := by
+  define; fix x; fix y; fix z
+  assume h2 : RelFromExt (inv (extension R)) x y; define at h2
+  assume h3 : RelFromExt (inv (extension R)) y z; define at h3
+  define; define at h1
+  exact h1 z y x h3 h2
+  done
 
 -- 6.
 theorem Exercise_4_3_18 {A : Type}
     (R S : BinRel A) (h1 : transitive R) (h2 : transitive S)
     (h3 : comp (extension S) (extension R) ⊆
       comp (extension R) (extension S)) :
-    transitive (RelFromExt (comp (extension R) (extension S))) := sorry
+    transitive (RelFromExt (comp (extension R) (extension S))) := by
+  define; fix x; fix y; fix z
+  assume h4 : RelFromExt (comp (extension R) (extension S)) x y; define at h4
+  obtain (xy : A) (h5 : (x, xy) ∈ extension S ∧ (xy, y) ∈ extension R) from h4
+  assume h6 : RelFromExt (comp (extension R) (extension S)) y z; define at h6
+  obtain (yz : A) (h7 : (y, yz) ∈ extension S ∧ (yz, z) ∈ extension R) from h6
+  have h8 : (xy, yz) ∈ comp (extension S) (extension R) := by
+    define; apply Exists.intro y; exact And.intro h5.right h7.left
+  have h9 : (xy, yz) ∈ comp (extension R) (extension S) := h3 h8
+  define at h9; obtain (xyz : A) (h10 : (xy, xyz) ∈ extension S ∧ (xyz, yz) ∈ extension R) from h9
+  apply Exists.intro xyz
+  apply And.intro
+  · exact h2 x xy xyz h5.left h10.left
+  · exact h1 xyz yz z h10.right h7.right
+  done
+
+#check Classical.choose
 
 -- 7.
 theorem Exercise_4_3_20 {A : Type} (R : BinRel A) (S : BinRel (Set A))
     (h : ∀ (X Y : Set A), S X Y ↔ X ≠ ∅ ∧ Y ≠ ∅ ∧
     ∀ (x y : A), x ∈ X → y ∈ Y → R x y) :
-    transitive R → transitive S := sorry
+    transitive R → transitive S := by
+  assume h1 : transitive R
+  define; fix X; fix Y; fix Z
+  assume h2 : S X Y; assume h3 : S Y Z
+  rw [h] at h2
+  rw [h] at h3
+  have h5 : Y ≠ ∅ := h2.right.left
+  rw [← Set.nonempty_iff_ne_empty] at h5
+  define at h5; obtain (y : A) (h6 : y ∈ Y) from h5
+  rw [h]
+  apply And.intro h2.left
+  apply And.intro h3.right.left
+  fix x; fix z; assume h7 : x ∈ X; assume h8 : z ∈ Z
+  have h9 : R x y := h2.right.right x y h7 h6
+  have h10 : R y z := h3.right.right y z h6 h8
+  exact h1 x y z h9 h10
+  done
 
 -- 8.
 --You might not be able to complete this proof
