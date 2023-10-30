@@ -269,8 +269,6 @@ theorem Exercise_4_3_18 {A : Type}
   · exact h1 xyz yz z h10.right h7.right
   done
 
-#check Classical.choose
-
 -- 7.
 theorem Exercise_4_3_20 {A : Type} (R : BinRel A) (S : BinRel (Set A))
     (h : ∀ (X Y : Set A), S X Y ↔ X ≠ ∅ ∧ Y ≠ ∅ ∧
