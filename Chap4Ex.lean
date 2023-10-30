@@ -553,28 +553,87 @@ theorem Exercise_4_4_24 {A : Type} (R : Set (A × A)) :
 -- 1.
 lemma overlap_implies_equal {A : Type}
     (F : Set (Set A)) (h : partition F) :
-    ∀ X ∈ F, ∀ Y ∈ F, ∀ (x : A), x ∈ X → x ∈ Y → X = Y := sorry
+    ∀ X ∈ F, ∀ Y ∈ F, ∀ (x : A), x ∈ X → x ∈ Y → X = Y := by
+  fix X : Set A; assume h1 : X ∈ F
+  fix Y : Set A; assume h2 : Y ∈ F
+  fix x; assume h3 : x ∈ X; assume h4 : x ∈ Y
+  define at h
+  by_contra h5
+  have h6 : pairwise_disjoint F := h.right.left
+  define at h6
+  have h7 : empty (X ∩ Y) := h6 X h1 Y h2 h5
+  define at h7
+  have h8 : x ∈ X ∩ Y := And.intro h3 h4
+  quant_neg at h7
+  have h9 : ¬x ∈ X ∩ Y := h7 x
+  show False from h9 h8
+  done
 
 -- 2.
-lemma Lemma_4_5_7_ref {A : Type} (F : Set (Set A)) (h : partition F) :
-    reflexive (EqRelFromPart F) := sorry
+lemma Lemma_4_5_7_ref {A : Type} (F : Set (Set A)) (h : partition F):
+    reflexive (EqRelFromPart F) := by
+  define; fix a : A
+  define; define at h
+  have h1 : a ∈ ⋃₀ F := h.left a
+  define at h1; obtain (B : Set A) (h2 : B ∈ F ∧ a ∈ B) from h1
+  apply Exists.intro B
+  exact And.intro h2.left (And.intro h2.right h2.right)
+  done
 
 -- 3.
-lemma Lemma_4_5_7_symm {A : Type} (F : Set (Set A)) (h : partition F) :
-    symmetric (EqRelFromPart F) := sorry
+lemma Lemma_4_5_7_symm {A : Type} (F : Set (Set A)) (h : partition F):
+    symmetric (EqRelFromPart F) := by
+  define; fix x; fix y; assume h1 : EqRelFromPart F x y
+  define at h1; define
+  obtain (X : Set A) (h2 : X ∈ F ∧ x ∈ X ∧ y ∈ X) from h1
+  apply Exists.intro X
+  exact And.intro h2.left (And.intro h2.right.right h2.right.left)
+  done
 
 -- 4.
-lemma Lemma_4_5_7_trans {A : Type} (F : Set (Set A)) (h : partition F) :
-    transitive (EqRelFromPart F) := sorry
+lemma Lemma_4_5_7_trans {A : Type} (F : Set (Set A)) (h : partition F):
+    transitive (EqRelFromPart F) := by
+  define; fix x; fix y; fix z
+  assume h1 : EqRelFromPart F x y; assume h2 : EqRelFromPart F y z
+  define; define at h1; define at h2
+  obtain (X1 : Set A) (h3 : X1 ∈ F ∧ x ∈ X1 ∧ y ∈ X1) from h1
+  obtain (X2 : Set A) (h4 : X2 ∈ F ∧ y ∈ X2 ∧ z ∈ X2) from h2
+  have h5 : X1 = X2 := overlap_implies_equal F h X1 h3.left X2 h4.left y h3.right.right h4.right.left
+  rw [h5] at h3
+  apply Exists.intro X2
+  exact And.intro h3.left (And.intro h3.right.left h4.right.right)
+  done
 
 -- 5.
 lemma Lemma_4_5_8 {A : Type} (F : Set (Set A)) (h : partition F) :
-    ∀ X ∈ F, ∀ x ∈ X, equivClass (EqRelFromPart F) x = X := sorry
+    ∀ X ∈ F, ∀ x ∈ X, equivClass (EqRelFromPart F) x = X := by
+  fix X; assume hX : X ∈ F; fix x; assume hx : x ∈ X
+  ext a
+  apply Iff.intro
+  · assume ha: a ∈ equivClass (EqRelFromPart F) x
+    define at ha
+    obtain (Y : Set A) (hY : Y ∈ F ∧ a ∈ Y ∧ x ∈ Y) from ha
+    have hXeqY : X = Y := overlap_implies_equal F h X hX Y hY.left x hx hY.right.right
+    rw [hXeqY]
+    exact hY.right.left
+  · assume haX : a ∈ X
+    define; apply Exists.intro X
+    exact And.intro hX (And.intro haX hx)
+  done
 
 -- 6.
 lemma elt_mod_equiv_class_of_elt
     {A : Type} (R : BinRel A) (h : equiv_rel R) :
-    ∀ X ∈ mod A R, ∀ x ∈ X, equivClass R x = X := sorry
+    ∀ X ∈ mod A R, ∀ x ∈ X, equivClass R x = X := by
+  fix X; assume h1 : X ∈ mod A R
+  fix x; assume hxX : x ∈ X
+  define at h1
+  obtain (x' : A) (hx' : equivClass R x' = X) from h1
+  have hxRx' : x ∈ equivClass R x' := by
+    rw [hx']; exact hxX
+  have hRxRx' : equivClass R x = equivClass R x' := (Lemma_4_5_5_2 R h x' x).mp hxRx'
+  rw [hRxRx']; exact hx'
+  done
 
 -- Definitions for next three exercises:
 def dot {A : Type} (F G : Set (Set A)) : Set (Set A) :=
@@ -586,20 +645,106 @@ def conj {A : Type} (R S : BinRel A) (x y : A) : Prop :=
 -- 7.
 theorem Exercise_4_5_20a {A : Type} (R S : BinRel A)
     (h1 : equiv_rel R) (h2 : equiv_rel S) :
-    equiv_rel (conj R S) := sorry
+    equiv_rel (conj R S) := by
+  define at h1; define at h2; define
+  apply And.intro
+  · define; fix a; define
+    apply And.intro (h1.left a) (h2.left a)
+  · apply And.intro
+    · define; fix x; fix y; assume h : conj R S x y
+      define at h; define
+      exact And.intro (h1.right.left x y h.left) (h2.right.left x y h.right)
+    · define; fix x; fix y; fix z
+      assume hxy : conj R S x y
+      assume hyz : conj R S y z
+      define at hxy; define at hyz; define
+      apply And.intro
+      · exact h1.right.right x y z hxy.left hyz.left
+      · exact h2.right.right x y z hxy.right hyz.right
+  done
 
 -- 8.
 theorem Exercise_4_5_20b {A : Type} (R S : BinRel A)
     (h1 : equiv_rel R) (h2 : equiv_rel S) :
     ∀ (x : A), equivClass (conj R S) x =
-      equivClass R x ∩ equivClass S x := sorry
+      equivClass R x ∩ equivClass S x := by
+  fix a; ext x; apply Iff.intro
+  · assume h : x ∈ equivClass (conj R S) a
+    define at h; exact h
+  · assume h : x ∈ equivClass R a ∩ equivClass S a
+    define; exact h
+  done
 
 -- 9.
 theorem Exercise_4_5_20c {A : Type} (R S : BinRel A)
     (h1 : equiv_rel R) (h2 : equiv_rel S) :
-    mod A (conj R S) = dot (mod A R) (mod A S) := sorry
+    mod A (conj R S) = dot (mod A R) (mod A S) := by
+  ext X; apply Iff.intro
+  · assume h : X ∈ mod A (conj R S)
+    define at h; obtain (a : A) (ha : equivClass (conj R S) a = X) from h
+    define
+    apply And.intro
+    · have haclass : a ∈ equivClass (conj R S) a := by
+        define; exact And.intro (h1.left a) (h2.left a)
+      have haX : a ∈ X := by
+        rw [← ha]; exact haclass
+      by_contra hX; define at hX; quant_neg at hX
+      have haXneg : ¬a ∈ X := hX a
+      show False from haXneg haX
+    · apply Exists.intro (equivClass R a)
+      apply And.intro
+      · define; apply Exists.intro a; rfl
+      · apply Exists.intro (equivClass S a)
+        apply And.intro
+        · define; apply Exists.intro a; rfl
+        · rw [← ha]
+          exact Exercise_4_5_20b R S h1 h2 a
+  · assume h : X ∈ dot (mod A R) (mod A S)
+    define at h
+    have hXnempty := h.left; define at hXnempty; double_neg at hXnempty
+    obtain (x : A) (hxX : x ∈ X) from hXnempty
+    have h' : ∃ (X_1 : Set A), X_1 ∈ mod A R ∧ ∃ (Y : Set A), Y ∈ mod A S ∧ X = X_1 ∩ Y := h.right
+    obtain (X1 : Set A) (hX1 : X1 ∈ mod A R ∧ ∃ (Y : Set A), Y ∈ mod A S ∧ X = X1 ∩ Y) from h'
+    have h'' : ∃ (Y : Set A), Y ∈ mod A S ∧ X = X1 ∩ Y := hX1.right
+    obtain (X2 : Set A) (hX2 : X2 ∈ mod A S ∧ X = X1 ∩ X2) from h''
+    have hX1mod : X1 ∈ mod A R := hX1.left
+    have hX2mod : X2 ∈ mod A S := hX2.left
+    define at hX1mod; define at hX2mod
+    obtain (a1 : A) (ha1 : equivClass R a1 = X1) from hX1mod
+    obtain (a2 : A) (ha2 : equivClass S a2 = X2) from hX2mod
+    have hxinter : x ∈ X1 ∩ X2 := by
+      rw [← hX2.right]; exact hxX
+    have hxX1 : x ∈ X1 := Set.mem_of_mem_inter_left hxinter
+    have hxX2 : x ∈ X2 := Set.mem_of_mem_inter_right hxinter
+    have hxX1 : equivClass R x = X1 := elt_mod_equiv_class_of_elt R h1 X1 hX1.left x hxX1
+    have hxX2 : equivClass S x = X2 := elt_mod_equiv_class_of_elt S h2 X2 hX2.left x hxX2
+    define; apply Exists.intro x
+    rw [Exercise_4_5_20b R S h1 h2 x, hxX1, hxX2]
+    exact hX2.right.symm
+  done
 
 -- 10.
 def equiv_mod (m x y : Int) : Prop := m ∣ (x - y)
 
-theorem Theorem_4_5_10 : ∀ (m : Int), equiv_rel (equiv_mod m) := sorry
+theorem Theorem_4_5_10 : ∀ (m : Int), equiv_rel (equiv_mod m) := by
+  fix m : ℤ
+  define
+  apply And.intro
+  · define; fix x
+    define; apply Exists.intro 0
+    ring
+  · apply And.intro
+    · define; fix y; fix z; assume h : equiv_mod m y z
+      define at h; define
+      obtain (c : ℤ) (h' : y - z = m * c) from h
+      apply Exists.intro (-1 * c)
+      simp; rw [← h']; ring
+    · define; fix x; fix y; fix z
+      assume h1 : equiv_mod m x y; assume h2 : equiv_mod m y z
+      define at h1; define at h2; define
+      obtain (c₁ : ℤ) (hc₁ : x - y = m * c₁) from h1
+      obtain (c₂ : ℤ) (hc₂ : y - z = m * c₂) from h2
+      apply Exists.intro (c₁ + c₂)
+      rw [mul_add, ← hc₁, ← hc₂]
+      ring
+  done

@@ -351,3 +351,287 @@ def upperBd {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
 
 def lub {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
   smallestElt R a { c : A | upperBd R c B }
+
+/-
+Finally, we introduce equivalence relations; relations that are reflexive,
+symmetric and transitive.
+-/
+
+def equiv_rel {A : Type} (R : BinRel A) : Prop :=
+  reflexive R ∧ symmetric R ∧ transitive R
+
+/-
+An important concept related to equivalence relations is the equivalence class
+of an element, namely the set of all elements related to it.
+-/
+
+def equivClass {A : Type} (R : BinRel A) (x : A) : Set A :=
+  { y : A | R y x }
+
+/-
+Given an equivalence relation we can define a quotient, the set of all
+equivalence classes of the relation.
+-/
+
+def mod (A : Type) (R : BinRel A) : Set (Set A) :=
+  { equivClass R x | x : A }
+
+/-
+We are gonna prove some relations. Instead of using the notation `X = ∅`,
+it may be more useful to use a `empty` property stating that the set has no
+elements. Similarly, we introduce a pairwise disjoint property for two
+sets with empty intersection.
+-/
+
+def empty {A : Type} (X : Set A) : Prop := ¬∃ (x : A), x ∈ X
+
+def pairwise_disjoint {A : Type} (F : Set (Set A)) : Prop :=
+  ∀ X ∈ F, ∀ Y ∈ F, X ≠ Y → empty (X ∩ Y)
+
+/-
+Now, one key property of equivalence relations is that the equivalence classes
+form a `partition`, namely, a set of sets which are pairwise disjoint and
+whose union is the total set.
+-/
+
+def partition {A : Type} (F : Set (Set A)) : Prop :=
+  (∀ (x : A), x ∈ ⋃₀ F) ∧ pairwise_disjoint F ∧ ∀ X ∈ F, ¬empty X
+
+/-
+Let us prove what we just claimed about equivalence classes being a partition.
+-/
+
+-- Every element is in an equivalence class
+lemma Lemma_4_5_5_1 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    ∀ (x : A), x ∈ equivClass R x := by
+  fix x : A
+  define
+  define at h
+  have Rref : reflexive R := h.left
+  show R x x from Rref x
+  done
+
+
+lemma Lemma_4_5_5_2 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    ∀ (x y : A), y ∈ equivClass R x ↔
+      equivClass R y = equivClass R x := by
+  have Rsymm : symmetric R := h.right.left
+  have Rtrans : transitive R := h.right.right
+  fix x : A; fix y : A
+  apply Iff.intro
+  · -- (→)
+    assume h2 :
+      y ∈ equivClass R x
+    define at h2
+    apply Set.ext
+    fix z : A
+    apply Iff.intro
+    · -- Proof that z ∈ equivClass R y → z ∈ equivClass R x
+      assume h3 : z ∈ equivClass R y
+      define
+      define at h3
+      show R z x from Rtrans z y x h3 h2
+      done
+    · -- Proof that z ∈ equivClass R x → z ∈ equivClass R y
+      assume h3 : z ∈ equivClass R x
+      define
+      define at h3
+      have h4 : R x y := Rsymm y x h2
+      show R z y from Rtrans z x y h3 h4
+      done
+    done
+  · -- (←)
+    assume h2 :
+      equivClass R y = equivClass R x
+    rw [←h2]
+    show y ∈ equivClass R y from Lemma_4_5_5_1 R h y
+    done
+  done
+
+/-
+We prove the three needed statements separately.
+-/
+
+lemma Theorem_4_5_4_part_1 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    ∀ (x : A), x ∈ ⋃₀ (mod A R) := by
+  fix x : A
+  define        --Goal : ∃ (t : Set A), t ∈ mod A R ∧ x ∈ t
+  apply Exists.intro (equivClass R x)
+  apply And.intro _ (Lemma_4_5_5_1 R h x)
+                --Goal : equivClass R x ∈ mod A R
+  define        --Goal : ∃ (x_1 : A), equivClass R x_1 = equivClass R x
+  apply Exists.intro x
+  rfl
+  done
+
+lemma Theorem_4_5_4_part_2 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    pairwise_disjoint (mod A R) := by
+  define
+  fix X : Set A
+  assume h2 : X ∈ mod A R
+  fix Y : Set A
+  assume h3 : Y ∈ mod A R           --Goal : X ≠ Y → empty (X ∩ Y)
+  define at h2; define at h3
+  obtain (x : A) (h4 : equivClass R x = X) from h2
+  obtain (y : A) (h5 : equivClass R y = Y) from h3
+  contrapos
+  assume h6 : ∃ (x : A), x ∈ X ∩ Y  --Goal : X = Y
+  obtain (z : A) (h7 : z ∈ X ∩ Y) from h6
+  define at h7
+  rewrite [←h4, ←h5] at h7 --h7 : z ∈ equivClass R x ∧ z ∈ equivClass R y
+  have h8 : equivClass R z = equivClass R x :=
+    (Lemma_4_5_5_2 R h x z).ltr h7.left
+  have h9 : equivClass R z = equivClass R y :=
+    (Lemma_4_5_5_2 R h y z).ltr h7.right
+  show X = Y from
+    calc X
+      _ = equivClass R x := h4.symm
+      _ = equivClass R z := h8.symm
+      _ = equivClass R y := h9
+      _ = Y              := h5
+  done
+
+lemma Theorem_4_5_4_part_3 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    ∀ X ∈ mod A R, ¬empty X := by
+  fix X : Set A
+  assume h2 : X ∈ mod A R  --Goal : ¬empty X
+  define; double_neg       --Goal : ∃ (x : A), x ∈ X
+  define at h2             --h2 : ∃ (x : A), equivClass R x = X
+  obtain (x : A) (h3 : equivClass R x = X) from h2
+  rewrite [←h3]
+  show ∃ (x_1 : A), x_1 ∈ equivClass R x from
+    Exists.intro x (Lemma_4_5_5_1 R h x)
+  done
+
+/-
+And we now put everything together.
+-/
+
+theorem Theorem_4_5_4 {A : Type} (R : BinRel A) (h : equiv_rel R) :
+    partition (mod A R) := And.intro (Theorem_4_5_4_part_1 R h)
+      (And.intro (Theorem_4_5_4_part_2 R h) (Theorem_4_5_4_part_3 R h))
+
+/-
+Conversely, we now show that every partition arises as the set of equivalence
+classes of an equivalence relation. We define thef ollowing relation.
+-/
+
+def EqRelFromPart {A : Type} (F : Set (Set A)) (x y : A) : Prop :=
+  ∃ X ∈ F, x ∈ X ∧ y ∈ X
+
+/-
+We then have the following results.
+-/
+
+lemma overlap_implies_equal {A : Type}
+    (F : Set (Set A)) (h : partition F) :
+    ∀ X ∈ F, ∀ Y ∈ F, ∀ (x : A), x ∈ X → x ∈ Y → X = Y := by
+  fix X : Set A; assume h1 : X ∈ F
+  fix Y : Set A; assume h2 : Y ∈ F
+  fix x; assume h3 : x ∈ X; assume h4 : x ∈ Y
+  define at h
+  by_contra h5
+  have h6 : pairwise_disjoint F := h.right.left
+  define at h6
+  have h7 : empty (X ∩ Y) := h6 X h1 Y h2 h5
+  define at h7
+  have h8 : x ∈ X ∩ Y := And.intro h3 h4
+  quant_neg at h7
+  have h9 : ¬x ∈ X ∩ Y := h7 x
+  show False from h9 h8
+  done
+
+lemma Lemma_4_5_7_ref {A : Type} (F : Set (Set A)) (h : partition F):
+    reflexive (EqRelFromPart F) := by
+  define; fix a : A
+  define; define at h
+  have h1 : a ∈ ⋃₀ F := h.left a
+  define at h1; obtain (B : Set A) (h2 : B ∈ F ∧ a ∈ B) from h1
+  apply Exists.intro B
+  exact And.intro h2.left (And.intro h2.right h2.right)
+  done
+
+lemma Lemma_4_5_7_symm {A : Type} (F : Set (Set A)) (h : partition F):
+    symmetric (EqRelFromPart F) := by
+  define; fix x; fix y; assume h1 : EqRelFromPart F x y
+  define at h1; define
+  obtain (X : Set A) (h2 : X ∈ F ∧ x ∈ X ∧ y ∈ X) from h1
+  apply Exists.intro X
+  exact And.intro h2.left (And.intro h2.right.right h2.right.left)
+  done
+
+lemma Lemma_4_5_7_trans {A : Type} (F : Set (Set A)) (h : partition F):
+    transitive (EqRelFromPart F) := by
+  define; fix x; fix y; fix z
+  assume h1 : EqRelFromPart F x y; assume h2 : EqRelFromPart F y z
+  define; define at h1; define at h2
+  obtain (X1 : Set A) (h3 : X1 ∈ F ∧ x ∈ X1 ∧ y ∈ X1) from h1
+  obtain (X2 : Set A) (h4 : X2 ∈ F ∧ y ∈ X2 ∧ z ∈ X2) from h2
+  have h5 : X1 = X2 := overlap_implies_equal F h X1 h3.left X2 h4.left y h3.right.right h4.right.left
+  rw [h5] at h3
+  apply Exists.intro X2
+  exact And.intro h3.left (And.intro h3.right.left h4.right.right)
+  done
+
+/-
+We now put them together.
+-/
+
+lemma Lemma_4_5_7 {A : Type} (F : Set (Set A)) (h : partition F) :
+    equiv_rel (EqRelFromPart F) := And.intro (Lemma_4_5_7_ref F h)
+      (And.intro (Lemma_4_5_7_symm F h) (Lemma_4_5_7_trans F h))
+
+/-
+The next result is also needed.
+-/
+
+lemma Lemma_4_5_8 {A : Type} (F : Set (Set A)) (h : partition F) :
+    ∀ X ∈ F, ∀ x ∈ X, equivClass (EqRelFromPart F) x = X := by
+  fix X; assume hX : X ∈ F; fix x; assume hx : x ∈ X
+  ext a
+  apply Iff.intro
+  · assume ha: a ∈ equivClass (EqRelFromPart F) x
+    define at ha
+    obtain (Y : Set A) (hY : Y ∈ F ∧ a ∈ Y ∧ x ∈ Y) from ha
+    have hXeqY : X = Y := overlap_implies_equal F h X hX Y hY.left x hx hY.right.right
+    rw [hXeqY]
+    exact hY.right.left
+  · assume haX : a ∈ X
+    define; apply Exists.intro X
+    exact And.intro hX (And.intro haX hx)
+  done
+
+/-
+And now we can finally prove the result.
+-/
+
+theorem Theorem_4_5_6 {A : Type} (F : Set (Set A)) (h: partition F) :
+    ∃ (R : BinRel A), equiv_rel R ∧ mod A R = F := by
+  set R : BinRel A := EqRelFromPart F
+  apply Exists.intro R
+  apply And.intro (Lemma_4_5_7 F h)
+  apply Set.ext
+  fix X : Set A
+  apply Iff.intro
+  · -- (→)
+    assume h2 : X ∈ mod A R
+    define at h2
+    obtain (x : A) (h3 : equivClass R x = X) from h2
+    have h4 : x ∈ ⋃₀ F := h.left x
+    define at h4
+    obtain (Y : Set A) (h5 : Y ∈ F ∧ x ∈ Y) from h4
+    have h6 : equivClass R x = Y :=
+      Lemma_4_5_8 F h Y h5.left x h5.right
+    rewrite [←h3, h6]
+    show Y ∈ F from h5.left
+    done
+  · -- (←)
+    assume h2 : X ∈ F
+    have h3 : ¬empty X := h.right.right X h2
+    define at h3; double_neg at h3
+    obtain (x : A) (h4 : x ∈ X) from h3
+    define
+    show ∃ (x : A), equivClass R x = X from
+      Exists.intro x (Lemma_4_5_8 F h X h2 x h4)
+    done
+  done
