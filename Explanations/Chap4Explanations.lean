@@ -234,3 +234,120 @@ example {A B : Type} (R : Rel A B) :
 
 example {A B : Type} (R : Set (A × B)) :
     extension (RelFromExt R) = R := by rfl
+
+/-
+We now introduce relations with additional properties.
+-/
+
+/-
+Recall that a relation is an `order relation` if it is reflexive,
+transitive and antisymmetric.
+-/
+
+def antisymmetric {A : Type} (R : BinRel A) : Prop :=
+  ∀ (x y : A), R x y → R y x → x = y
+
+def partial_order {A : Type} (R : BinRel A) : Prop :=
+  reflexive R ∧ transitive R ∧ antisymmetric R
+
+def total_order {A : Type} (R : BinRel A) : Prop :=
+  partial_order R ∧ ∀ (x y : A), R x y ∨ R y x
+
+/-
+Note that `partial_order` means `reflexive R ∧ (transitive R ∧ antisymmetric R)`
+based on how Lean groups parenthesis. Therefore, if `h` is proof of partial
+order:
+* `h.left` is prove of reflexivity
+* `h.right.left` is proof of transitity
+* `h.right.right` is proof of antisymmetry.
+-/
+
+/-
+An example of a partial order relation is the subset relation.
+-/
+
+def sub (A : Type) (X Y : Set A) : Prop := X ⊆ Y
+
+/-
+In order relations, we can talk about smallest elements, or minimums. Namely,
+an element that is below (related to) every other element.
+-/
+
+def smallestElt {A : Type} (R : BinRel A) (b : A) (B : Set A) : Prop :=
+  b ∈ B ∧ ∀ x ∈ B, R b x
+
+/-
+Smallest elements don't always exist, but `minimals` do. Namely, elements for
+which we cannot find anything below (but there may be elements not related
+to it in either direction).
+-/
+
+def minimalElt {A : Type} (R : BinRel A) (b : A) (B : Set A) : Prop :=
+  b ∈ B ∧ ¬∃ x ∈ B, R x b ∧ x ≠ b
+
+/-
+If a minimum exists, it is a minimal element, and it is unique, as we prove now.
+-/
+
+theorem Theorem_4_4_6_2 {A : Type} (R : BinRel A) (B : Set A) (b : A)
+    (h1 : partial_order R) (h2 : smallestElt R b B) :
+    minimalElt R b B ∧ ∀ (c : A), minimalElt R c B → b = c := by
+  define at h1
+  define at h2
+  apply And.intro
+  · define
+    apply And.intro h2.left
+    quant_neg; fix x : A
+    demorgan
+    or_right with h3
+    demorgan
+    or_right with h4
+    have h5 : R b x := h2.right x h3
+    exact h1.right.right x b h4 h5
+  · fix x : A; assume h3 : minimalElt R x B
+    define at h3
+    contradict h3.right with h4
+    apply Exists.intro b
+    have h5 : R b x := h2.right x h3.left
+    exact And.intro h2.left (And.intro h5 h4)
+  done
+
+/-
+And, if we have a total order, any minimal element must also be a smallest
+element.
+-/
+
+theorem Theorem_4_4_6_3 {A : Type} (R : BinRel A) (B : Set A) (b : A)
+    (h1 : total_order R) (h2 : minimalElt R b B) : smallestElt R b B := by
+  define
+  define at h1
+  define at h2
+  apply And.intro h2.left
+  fix x : A; assume h3 : x ∈ B
+  by_cases h4 : x = b
+  · -- Case x = b
+    rw [h4]
+    have h5 : partial_order R := h1.left
+    define at h5
+    exact h5.left b
+  · -- Case x ≠ b
+    have h5 : R x b ∨ R b x := h1.right x b
+    have h6 : ¬R x b := by
+      contradict h2.right with h8
+      apply Exists.intro x
+      exact And.intro h3 (And.intro h8 h4)
+    disj_syll h5 h6
+    exact h5
+  done
+
+/-
+Maximal and maximum elements can be defined in an analogous manner.
+
+We can also define upper bounds and least upper bounds.
+-/
+
+def upperBd {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
+  ∀ x ∈ B, R x a
+
+def lub {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
+  smallestElt R a { c : A | upperBd R c B }
