@@ -441,7 +441,7 @@ theorem Exercise_4_4_9_part {A B : Type} (R : BinRel A) (S : BinRel B)
       assume h; by_contra; show False from h6 h
     · right; rw [h3]
       apply And.intro h4
-      assume h; by_contra; show False from h6 h
+      assume h; by_contra; show False from h6 h.symm
   done
 
 -- 6.
