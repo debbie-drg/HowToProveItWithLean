@@ -6,6 +6,9 @@ namespace HTPI
 
 -- Chapter 5: Functions --
 
+
+-- Section 5.1. Functions
+
 /-
 One way of thinking about functions is to consider them as relations `F ⊆ A × B`
 wheregiven `a ∈ A` there is exactly one `b ∈ B` such that `(a, b) ∈ F`. We
@@ -145,6 +148,8 @@ When using `id`, Lean will figure out to which type it corresponds. If we want
 to specify the type we can write `@id A`.
 -/
 
+-- Section 5.2. One-to-one and onto
+
 /-
 Now remember that `f : A → B` is called onto if for every `b : B` there is
 `a : A` with `f a = b`.
@@ -198,6 +203,9 @@ theorem Theorem_5_2_5_2 {A B C : Type} (f : A → B) (g : B → C) :
   apply Exists.intro a
   rw [comp_def, h', h]
   done
+
+
+-- Section 5.3. Inverses of functions
 
 /-
 We continue with inverses. Since functions are relations, we can always consider
@@ -316,6 +324,9 @@ theorem Theorem_5_3_5 {A B : Type} (f : A → B) (g : B → A)
   rw [h7]
   exact h5
   done
+
+
+-- Section 5.4. Closures
 
 /-
 Assume now that `f : A → A` and `C : Set A`. We say that `C` is closed under
@@ -457,3 +468,61 @@ def closed_family {A : Type} (F : Set (A → A)) (C : Set A) : Prop :=
 
 def closure_family {A : Type} (F : Set (A → A)) (B C : Set A) : Prop :=
   smallestElt (sub A) C { D : Set A | B ⊆ D ∧ closed_family F D }
+
+
+-- Section 5.5. Images and inverse images
+
+/-
+Finally, recall the concepts of image and inverse image of maps.
+-/
+
+def image {A B : Type} (f : A → B) (X : Set A) : Set B :=
+  { f x | x ∈ X }
+
+def inverse_image {A B : Type} (f : A → B) (Y : Set B) : Set A :=
+  { a : A | f a ∈ Y }
+
+--The following theorems illustrate the meaning of these definitions:
+theorem image_def {A B : Type} (f : A → B) (X : Set A) (b : B) :
+    b ∈ image f X ↔ ∃ x ∈ X, f x = b := by rfl
+
+theorem inverse_image_def {A B : Type} (f : A → B) (Y : Set B) (a : A) :
+    a ∈ inverse_image f Y ↔ f a ∈ Y := by rfl
+
+/-
+It is then natural to ask how these concepts interact with the usual
+set operations.
+-/
+
+theorem Theorem_5_5_2_1 {A B : Type} (f : A → B) (W X : Set A) :
+    image f (W ∩ X) ⊆ image f W ∩ image f X := by
+  fix y : B; assume h1 : y ∈ image f (W ∩ X)
+  define at h1
+  obtain (a : A) (h2 : a ∈ W ∩ X ∧ f a = y) from h1
+  define : a ∈ W ∩ X at h2
+  apply And.intro
+  · define
+    apply Exists.intro a; exact And.intro h2.left.left h2.right
+  · define
+    apply Exists.intro a; exact And.intro h2.left.right h2.right
+  done
+
+
+theorem Theorem_5_5_2_2 {A B : Type} (f : A → B) (W X : Set A)
+    (h1 : one_to_one f) : image f (W ∩ X) = image f W ∩ image f X := by
+  apply Set.ext; fix y : B
+  apply Iff.intro
+  · assume h2 : y ∈ image f (W ∩ X)
+    exact Theorem_5_5_2_1 f W X h2
+  · assume h2 : y ∈ image f W ∩ image f X
+    define at h2
+    rw [image_def, image_def] at h2
+    obtain (x1 : A) (h3 : x1 ∈ W ∧ f x1 = y) from h2.left
+    obtain (x2 : A) (h4 : x2 ∈ X ∧ f x2 = y) from h2.right
+    have h5 : f x2 = y := h4.right
+    rw [← h3.right] at h5
+    have h6 : x1 = x2 := (h1 x2 x1 h5).symm
+    rw [h6] at h3
+    define; apply Exists.intro x2
+    exact And.intro (And.intro h3.left h4.left) h3.right
+  done

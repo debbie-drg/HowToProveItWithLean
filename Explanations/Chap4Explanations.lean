@@ -4,6 +4,9 @@ namespace HTPI
 
 -- Chapter 4: Relations --
 
+
+-- Section 4.1. Ordered pairs and cartesian products
+
 /-
 If `A` and `B` are types, `A × B` is the type of ordered pairs `(a, b) : A × B`,
 where `a : A` and `b : B`. If `p = (a, b)`, then `a = p.fst`, and `b = p.snd`.
@@ -16,6 +19,8 @@ A relation in `A × B` is just a subset `R ⊆ A × B`. If `(a, b) ∈ R` we den
 `Set (A × B)`. We introduce some common definitions.
 -/
 
+
+-- Section 4.2. Relations
 
 -- Let `R` be a relation.
 
@@ -128,6 +133,9 @@ theorem Theorem_4_2_5_5 {A B C : Type}
     exact And.intro h2.right h2.left
   done
 
+
+-- Section 4.3. More about relations
+
 /-
 In Lean, instead of viewing relations as `Set (A × B)` we have a type `Rel A B`.
 When using this type, we denote `R a b` when `a R b` in standard mathematical
@@ -234,6 +242,9 @@ example {A B : Type} (R : Rel A B) :
 
 example {A B : Type} (R : Set (A × B)) :
     extension (RelFromExt R) = R := by rfl
+
+
+-- Section 4.4. Ordering relations.
 
 /-
 We now introduce relations with additional properties.
@@ -351,6 +362,9 @@ def upperBd {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
 
 def lub {A : Type} (R : BinRel A) (a : A) (B : Set A) : Prop :=
   smallestElt R a { c : A | upperBd R c B }
+
+
+-- Section 4.5. Equivalence relations.
 
 /-
 Finally, we introduce equivalence relations; relations that are reflexive,

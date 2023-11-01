@@ -30,6 +30,9 @@ interpret (h2 h1) h3, which makes no sense.
 
 -- Now we introduce proofs in tactic mode.
 
+
+-- Sections 3.1. & 3.2. Proofs involving negations and conditionals
+
 /-
 Assume we want to prove `P → Q`. We can do so in one of two ways:
 1. Assume `P` and prove `Q`.
@@ -184,6 +187,9 @@ theorem Like_Example_3_2_5
   show a ∈ B from h2 h1
   done
 
+
+-- Section 3.3. Proofs involving quantifiers.
+
 /-
 Now we start introducing (existential and universal) quantifiers.
 
@@ -292,6 +298,9 @@ theorem Example_3_3_5 (U : Type) (B : Set U)
   exact And.intro h2 h3
   done
 
+
+-- Section 3.4. Proofs involving conjunctions and biconditionals.
+
 /-
 We now move on to conjunctions and biconditionals.
 If `h1 : P` and `h2 : Q`, then `And.intro h1 h2 : P ∧ Q`. We can also write
@@ -378,6 +387,9 @@ the correct variables are inferred.
 
 Inference of variables is also used in the remaining lines.
 -/
+
+
+-- Proofs involving disjunctions
 
 /-
 We move on to disjunctions.
@@ -474,6 +486,8 @@ example
   exact h4
   done
 
+
+-- Section 3.6. Existence and uniqueness proofs.
 
 /-
 Now we review existence and uniqueness. Namely, assume that we have a
@@ -587,6 +601,9 @@ theorem union_comm₂ {U : Type} (X Y : Set U) :
   -- It can take a bit to process. The next line is the suggested result.
   exact Or.comm
   done
+
+
+-- Section 3.7. More examples of proofs.
 
   /-
   We now get into more algebraic reasoning.
