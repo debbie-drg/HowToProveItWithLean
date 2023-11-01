@@ -589,44 +589,176 @@ theorem Exercise_5_4_13a {A : Type} (F : Set (A → A)) (B : Set A) :
 
 --Warning!  Not all of these examples are correct!
 example {A B : Type} (f : A → B) (W X : Set A) :
-    image f (W ∪ X) = image f W ∪ image f X := sorry
+    image f (W ∪ X) = image f W ∪ image f X := by
+  apply Set.ext; fix y
+  apply Iff.intro
+  · assume h1 : y ∈ image f (W ∪ X)
+    define at h1
+    obtain (x : A) (h2 : x ∈ W ∪ X ∧ f x = y) from h1
+    have h3 : x ∈ W ∪ X := h2.left
+    by_cases on h3
+    · left; define; apply Exists.intro x; exact And.intro h3 h2.right
+    · right; define; apply Exists.intro x; exact And.intro h3 h2.right
+  · assume h1 : y ∈ image f W ∪ image f X
+    by_cases on h1
+    · define at h1
+      obtain (x : A) (h2 : x ∈ W ∧ f x = y) from h1
+      define; apply Exists.intro x
+      apply And.intro
+      · left; exact h2.left
+      · exact h2.right
+    · define at h1
+      obtain (x : A) (h2 : x ∈ X ∧ f x = y) from h1
+      define; apply Exists.intro x
+      apply And.intro
+      · right; exact h2.left
+      · exact h2.right
+  done
 
+/-
+This result with an equality, as initially stated, is false.
+Assume `w` and `x` are points in `W \ X` and `X` with the same image. Then
+`f w` is in `f (W \ X)` but not in `f W \ f X`.
+We change the equality for `⊇`.
+-/
 example {A B : Type} (f : A → B) (W X : Set A) :
-    image f (W \ X) = image f W \ image f X := sorry
+    image f (W \ X) ⊇ image f W \ image f X := by
+  fix y; assume h1 : y ∈ image f W \ image f X
+  obtain (x : A) (h2 : x ∈ W ∧ f x = y) from h1.left
+  have h3 : ¬x ∈ X := by
+    by_contra h4
+    have h5 : y ∈ image f X := by
+      define; apply Exists.intro x; exact And.intro h4 h2.right
+    show False from h1.right h5
+  define; apply Exists.intro x
+  apply And.intro
+  · exact And.intro h2.left h3
+  · exact h2.right
+  done
 
+/-
+This result is also false. For example `W` and `X` could both be disjoint
+and the containment of the images would hold for example for a constant map.
+One implication is however true.
+-/
 example {A B : Type} (f : A → B) (W X : Set A) :
-    W ⊆ X ↔ image f W ⊆ image f X := sorry
+    W ⊆ X → image f W ⊆ image f X := by
+  assume h1 : W ⊆ X
+  fix y; assume h2 : y ∈ image f W
+  define at h2; obtain (x : A) (h3 : x ∈ W ∧ f x = y) from h2
+  have h4 : x ∈ X := h1 h3.left
+  define; apply Exists.intro x
+  exact And.intro h4 h3.right
+  done
 
 example {A B : Type} (f : A → B) (Y Z : Set B) :
     inverse_image f  (Y ∩ Z) =
-        inverse_image f Y ∩ inverse_image f Z := sorry
+        inverse_image f Y ∩ inverse_image f Z := by rfl
 
 example {A B : Type} (f : A → B) (Y Z : Set B) :
     inverse_image f  (Y ∪ Z) =
-        inverse_image f Y ∪ inverse_image f Z := sorry
+        inverse_image f Y ∪ inverse_image f Z := by rfl
 
 example {A B : Type} (f : A → B) (Y Z : Set B) :
     inverse_image f  (Y \ Z) =
-        inverse_image f Y \ inverse_image f Z := sorry
+        inverse_image f Y \ inverse_image f Z := by rfl
 
+/-
+The next result was written as an equivalence and it is false. If there
+are points not on the image of `f`, we could put them in `Y` but not in `Z`
+and find cases where the result is false. One implication is true.
+-/
 example {A B : Type} (f : A → B) (Y Z : Set B) :
-    Y ⊆ Z ↔ inverse_image f Y ⊆ inverse_image f Z := sorry
+    Y ⊆ Z → inverse_image f Y ⊆ inverse_image f Z := by
+  assume h1 : Y ⊆ Z
+  define; fix a; assume h2 : a ∈ inverse_image f Y
+  define at h2; exact h1 h2
+  done
 
+/-
+This next result was stated as an equality and is also false. There can
+be points outside of `X` whose image coincides with the image of a point
+of `X`. Those points would be in `inverse_image f (image f X)` but not in
+`X`. We do have the following.
+-/
 example {A B : Type} (f : A → B) (X : Set A) :
-    inverse_image f (image f X) = X := sorry
+    inverse_image f (image f X) ⊇ X := by
+  fix x; assume h1 : x ∈ X
+  define; apply Exists.intro x
+  apply And.intro
+  · exact h1
+  · rfl
+  done
 
+/-
+Similarly, if there are points in `Y` which are not in the image, those
+points will be missed. Thus, only one containment is true in the next
+result, which was initially formulated as an equality.
+-/
 example {A B : Type} (f : A → B) (Y : Set B) :
-    image f (inverse_image f Y) = Y := sorry
+    image f (inverse_image f Y) ⊆ Y := by
+  fix y : B; assume h1 : y ∈ image f (inverse_image f Y)
+  define at h1
+  obtain (x : A) (h2 : x ∈ inverse_image f Y ∧ f x = y) from h1
+  have h3 : x ∈ inverse_image f Y := h2.left
+  define at h3
+  have h4 : f x = y := h2.right
+  rw [h4] at h3
+  exact h3
+  done
 
 example {A : Type} (f : A → A) (C : Set A) :
-    closed f C → image f C ⊆ C := sorry
+    closed f C → image f C ⊆ C := by
+  assume h1 : closed f C
+  define; fix a; assume h2 : a ∈ image f C
+  define at h1
+  define at h2
+  obtain (x : A) (h3 : x ∈ C ∧ f x = a) from h2
+  have h4 : f x ∈ C := h1 x h3.left
+  rw [h3.right] at h4
+  exact h4
+  done
 
 example {A : Type} (f : A → A) (C : Set A) :
-    image f C ⊆ C → C ⊆ inverse_image f C := sorry
+    image f C ⊆ C → C ⊆ inverse_image f C := by
+  assume h1 : image f C ⊆ C
+  fix c : A; assume h2 : c ∈ C
+  define at h1
+  have h3 : f c ∈ image f C := by
+    apply Exists.intro c; exact And.intro h2 rfl
+  exact h1 h3
+  done
 
 example {A : Type} (f : A → A) (C : Set A) :
-    C ⊆ inverse_image f C → closed f C := sorry
+    C ⊆ inverse_image f C → closed f C := by
+  assume h1 : C ⊆ inverse_image f C
+  define; fix c : A; assume h2 : c ∈ C
+  have h3 : c ∈ inverse_image f C := h1 h2
+  define at h3
+  exact h3
+  done
 
 example {A B : Type} (f : A → B) (g : B → A) (Y : Set B)
     (h1 : f ∘ g = id) (h2 : g ∘ f = id) :
-    inverse_image f Y = image g Y := sorry
+    inverse_image f Y = image g Y := by
+  apply Set.ext; fix x
+  apply Iff.intro
+  · assume h3 : x ∈ inverse_image f Y
+    define at h3
+    define; apply Exists.intro (f x)
+    apply And.intro
+    · exact h3
+    · rw [← comp_def g f, h2]
+      rfl
+  · assume h3 : x ∈ image g Y
+    define; define at h3
+    obtain (y : B) (h4 : y ∈ Y ∧ g y = x) from h3
+    have h5 : y = f x := by
+      calc y
+        _ = id y := by rfl
+        _ = (f ∘ g) y := by rw [h1]
+        _ = f (g y) := by rfl
+        _ = f x := by rw [h4.right]
+    rw [← h5]
+    exact h4.left
+  done
