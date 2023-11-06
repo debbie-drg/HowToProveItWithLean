@@ -164,42 +164,259 @@ theorem Exercise_6_1_16a2 :
 -- 1.
 lemma Lemma_6_2_1_2 {A : Type} {R : BinRel A} {B : Set A} {b c : A}
     (h1 : partial_order R) (h2 : b ∈ B) (h3 : minimalElt R c (B \ {b}))
-    (h4 : ¬R b c) : minimalElt R c B := sorry
+    (h4 : ¬R b c) : minimalElt R c B := by
+  define at h3
+  define
+  apply And.intro h3.left.left
+  contradict h3.right with h5
+  obtain (x : A) (h6 : x ∈ B ∧ R x c ∧ x ≠ c) from h5
+  apply Exists.intro x
+  apply And.intro
+  · apply And.intro h6.left
+    by_contra h7
+    define at h7
+    rw [h7] at h6
+    show False from h4 h6.right.left
+  · exact h6.right
+  done
 
 -- 2.
 lemma extendPO_is_ref {A : Type} (R : BinRel A) (b : A)
-    (h : partial_order R) : reflexive (extendPO R b) := sorry
+    (h : partial_order R) : reflexive (extendPO R b) := by
+  define
+  fix x : A
+  define
+  left
+  exact h.left x
+  done
 
 -- 3.
 lemma extendPO_is_trans {A : Type} (R : BinRel A) (b : A)
-    (h : partial_order R) : transitive (extendPO R b) := sorry
+    (h : partial_order R) : transitive (extendPO R b) := by
+  define; fix x : A; fix y : A; fix z : A
+  assume h1 : extendPO R b x y
+  assume h2 : extendPO R b y z
+  define at h1; define at h2; define; define at h
+  have Rtrans : transitive R := h.right.left
+  by_cases on h1
+  · by_cases on h2
+    · left
+      exact Rtrans x y z h1 h2
+    · right
+      have h3 : R x b := Rtrans x y b h1 h2.left
+      exact And.intro h3 h2.right
+  · by_cases on h2
+    · right
+      apply And.intro h1.left
+      by_contra h3
+      have h4 : R y b := Rtrans y z b h2 h3
+      show False from h1.right h4
+    · right
+      exact And.intro h1.left h2.right
+  done
 
 -- 4.
 lemma extendPO_is_antisymm {A : Type} (R : BinRel A) (b : A)
-    (h : partial_order R) : antisymmetric (extendPO R b) := sorry
+    (h : partial_order R) : antisymmetric (extendPO R b) := by
+  define; fix x : A; fix y : A
+  define at h; have Rantisymm : antisymmetric R := h.right.right
+  have Rtrans : transitive R := h.right.left
+  assume h1 : extendPO R b x y
+  assume h2 : extendPO R b y x
+  define at h1; define at h2
+  by_cases on h1
+  · by_cases on h2
+    · exact Rantisymm x y h1 h2
+    · have h3 : R x b := Rtrans x y b h1 h2.left
+      by_contra; show False from h2.right h3
+  · by_cases on h2
+    · have h3 : R y b := Rtrans y x b h2 h1.left
+      by_contra; show False from h1.right h3
+    · by_contra; show False from h1.right h2.left
+  done
 
 -- 5.
 theorem Exercise_6_2_3 (A : Type) (R : BinRel A)
     (h : total_order R) : ∀ n ≥ 1, ∀ (B : Set A),
-    numElts B n → ∃ (b : A), smallestElt R b B := sorry
+    numElts B n → ∃ (b : A), smallestElt R b B := by
+  define at h
+  have Rpart_ord : partial_order R := h.left
+  define at Rpart_ord
+  by_induc
+  · fix B : Set A
+    assume h1 : numElts B 1
+    rw [one_elt_iff_singleton] at h1
+    obtain (x : A) (h2 : B = {x}) from h1
+    apply Exists.intro x
+    define
+    apply And.intro
+    · rw [h2]; rfl
+    · fix y : A; assume h3 : y ∈ B
+      have h3 : y = x := by
+        rw [h2] at h3
+        define at h3
+        exact h3
+      rw [h3]
+      exact Rpart_ord.left x
+  · fix n : ℕ; assume h1 : n ≥ 1
+    assume ih : ∀ (B : Set A), numElts B n → ∃ (b : A), smallestElt R b B
+    fix B : Set A; assume h2 : numElts B (n + 1)
+    have h3 : n + 1 > 0 := by linarith
+    have h4 : ∃ (x : A), x ∈ B := nonempty_of_pos_numElts h2 h3
+    obtain (b : A) (h5 : b ∈ B) from h4
+    set B' : Set A := B \ {b}
+    have h6 : numElts B' n := remove_one_numElts h2 h5
+    have h7 : ∃ (b : A), smallestElt R b B' := ih B' h6
+    obtain (b' : A) (h8 : smallestElt R b' B') from h7
+    by_cases h9 : R b b'
+    · apply Exists.intro b
+      define; apply And.intro h5
+      fix x : A; assume h10 : x ∈ B
+      by_cases h11 : x = b
+      · rw [h11]; exact Rpart_ord.left b
+      · have h12 : x ∈ B' := And.intro h10 h11
+        have h13 : R b' x := h8.right x h12
+        exact Rpart_ord.right.left b b' x h9 h13
+    · apply Exists.intro b'
+      disj_syll (h.right b b') h9 with h10
+      define; apply And.intro h8.left.left
+      fix x : A; assume h12 : x ∈ B
+      by_cases h11 : x = b
+      · rw [h11]; exact h10
+      · have h13 : x ∈ B' := And.intro h12 h11
+        exact h8.right x h13
+  done
 
 -- 6.
 --Hint:  First prove that R is reflexive
 theorem Exercise_6_2_4a {A : Type} (R : BinRel A)
     (h : ∀ (x y : A), R x y ∨ R y x) : ∀ n ≥ 1, ∀ (B : Set A),
-    numElts B n → ∃ x ∈ B, ∀ y ∈ B, ∃ (z : A), R x z ∧ R z y := sorry
+    numElts B n → ∃ x ∈ B, ∀ y ∈ B, ∃ (z : A), R x z ∧ R z y := by
+  have Rrefl : reflexive R := by
+    define; fix x; have h1 : R x x ∨ R x x := h x x
+    by_cases on h1; exact h1; exact h1
+  by_induc
+  · fix B : Set A; assume h1 : numElts B 1
+    rw [one_elt_iff_singleton] at h1
+    obtain (x : A) (h2 : B = {x}) from h1
+    apply Exists.intro x
+    apply And.intro
+    · rw [h2]; rfl
+    · fix y; assume h3 : y ∈ B
+      have h4 : y = x := by
+        rw [h2] at h3; define at h3; exact h3
+      rw [h4]
+      apply Exists.intro x
+      exact And.intro (Rrefl x) (Rrefl x)
+  · fix n : ℕ
+    assume h1 : n ≥ 1
+    assume ih : ∀ (B : Set A), numElts B n →
+      ∃ (x : A), x ∈ B ∧ ∀ (y : A), y ∈ B → ∃ (z : A), R x z ∧ R z y
+    fix B : Set A; assume h2 : numElts B (n + 1)
+    have h3 : n + 1 > 0 := by linarith
+    have h4 : ∃ (x : A), x ∈ B := nonempty_of_pos_numElts h2 h3
+    obtain (b : A) (h5 : b ∈ B) from h4
+    set B' : Set A := B \ {b}
+    have h6 : numElts B' n := remove_one_numElts h2 h5
+    have h7 : ∃ (x : A), x ∈ B' ∧ ∀ (y : A), y ∈ B' → ∃ (z : A),
+      R x z ∧ R z y := ih B' h6
+    obtain (x : A) (h8 : x ∈ B' ∧ ∀ (y : A), y ∈ B' → ∃ (z : A),
+      R x z ∧ R z y) from h7
+    by_cases h9 : ∃ (z : A), R x z ∧ R z b
+    · apply Exists.intro x
+      apply And.intro h8.left.left
+      fix y : A; assume h10 : y ∈ B
+      by_cases h11 : y = b
+      · rw [h11]; exact h9
+      · have h12 : y ∈ B' := And.intro h10 h11
+        exact h8.right y h12
+    · apply Exists.intro b
+      apply And.intro h5
+      fix y : A; assume h10 : y ∈ B
+      by_cases h11 : y = b
+      · rw [h11]
+        apply Exists.intro b
+        exact And.intro (Rrefl b) (Rrefl b)
+      · have h12 : y ∈ B' := And.intro h10 h11
+        obtain (z : A) (h13 : R x z ∧ R z y) from h8.right y h12
+        have h14 : R b z := by
+          by_contra h14
+          disj_syll (h b z) h14 with h15
+          apply h9; apply Exists.intro z
+          exact And.intro h13.left h15
+        apply Exists.intro z
+        exact And.intro h14 h13.right
+  done
 
 -- 7.
 theorem Like_Exercise_6_2_16 {A : Type} (f : A → A)
     (h : one_to_one f) : ∀ (n : Nat) (B : Set A), numElts B n →
-    closed f B → ∀ y ∈ B, ∃ x ∈ B, f x = y := sorry
+    closed f B → ∀ y ∈ B, ∃ x ∈ B, f x = y := by
+  by_induc
+  · fix B : Set A; assume h1 : numElts B 0
+    assume h2 : closed f B
+    fix y : A; assume h3 : y ∈ B
+    by_contra
+    rw [zero_elts_iff_empty] at h1
+    define at h1
+    quant_neg at h1
+    show False from h1 y h3
+  · fix n : ℕ
+    assume ih : ∀ (B : Set A), numElts B n → closed f B →
+      ∀ (y : A), y ∈ B → ∃ (x : A), x ∈ B ∧ f x = y
+    fix B : Set A; assume h1 : numElts B (n + 1)
+    assume h2 : closed f B
+    fix y : A; assume h3 : y ∈ B
+    by_contra h4
+    set B' : Set A := B \ {y}
+    have h5 : closed f B' := by
+      define
+      fix x : A; assume h5 : x ∈ B'
+      have h6 : x ∈ B := h5.left
+      have h7 : f x ∈ B := h2 x h6
+      have h8 : ¬f x = y := by
+        by_contra h8
+        apply h4
+        apply Exists.intro x
+        exact And.intro h6 h8
+      exact And.intro h7 h8
+    have h6 : n + 1 > 0 := by linarith
+    have h7 : numElts B' n := remove_one_numElts h1 h3
+    have h8 : ∀ (y : A), y ∈ B' → ∃ (x : A), x ∈ B' ∧ f x = y := ih B' h7 h5
+    have h9 : f y ∈ B := h2 y h3
+    have h10 : ¬f y = y := by
+      by_contra h10
+      apply h4
+      apply Exists.intro y
+      exact And.intro h3 h10
+    have h11 : f y ∈ B' := And.intro h9 h10
+    obtain (x : A) (h12 : x ∈ B' ∧ f x = f y) from h8 (f y) h11
+    have h13 : x = y := h x y h12.right
+    have h14 : ¬y ∈ B' := by
+      define; demorgan; right; rfl
+    apply h14; rw [← h13]; exact h12.left
+  done
 
 -- 8.
 --Hint:  Use Exercise_6_2_2
 theorem Example_6_2_2 {A : Type} (R : BinRel A)
     (h1 : ∃ (n : Nat), numElts { x : A | x = x } n)
     (h2 : partial_order R) : ∃ (T : BinRel A),
-      total_order T ∧ ∀ (x y : A), R x y → T x y := sorry
+      total_order T ∧ ∀ (x y : A), R x y → T x y := by
+  set B : Set A := {x : A | x = x}
+  obtain (n : ℕ) (h3 : numElts B n) from h1
+  obtain (T : BinRel A)
+    (h4 : partial_order T ∧ (∀ (x y : A), R x y → T x y) ∧
+    ∀ x ∈ B, ∀ (y : A), T x y ∨ T y x) from Exercise_6_2_2 R h2 n B h3
+  apply Exists.intro T
+  apply And.intro
+  · define
+    apply And.intro h4.left
+    fix x; fix y
+    have h5 : x ∈ B := rfl
+    exact h4.right.right x h5 y
+  · exact h4.right.left
+  done
 
 /- Section 6.3 -/
 -- 1.
