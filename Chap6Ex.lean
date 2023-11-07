@@ -947,19 +947,19 @@ theorem triple_rec_formula :
       · rw [h3]; rfl
       · obtain (k : ℕ) (h4 : n = k + 3)
           from exists_eq_add_three_of_ne_zero_one_two h1 h2 h3
-        have h4₂ : n > k := by linarith
-        have ih3 : triple_rec k = 2 ^ k * Fib k := ih k h4₂
-        have h4₃ : n > k + 1 := by linarith
-        have ih3₂ : triple_rec (k + 1) = 2 ^ (k + 1) * Fib (k + 1) := ih (k + 1) h4₃
-        have h4₄ : n > k + 2 := by linarith
-        have ih3₃ : triple_rec (k + 2) = 2 ^ (k + 2) * Fib (k + 2) := ih (k + 2) h4₄
+        have h4₀ : n > k := by linarith
+        have ih₀ : triple_rec k = 2 ^ k * Fib k := ih k h4₀
+        have h4₁ : n > k + 1 := by linarith
+        have ih₁ : triple_rec (k + 1) = 2 ^ (k + 1) * Fib (k + 1) := ih (k + 1) h4₁
+        have h4₂ : n > k + 2 := by linarith
+        have ih₂ : triple_rec (k + 2) = 2 ^ (k + 2) * Fib (k + 2) := ih (k + 2) h4₂
         have h5 : 4 * triple_rec k = 2 ^ (k + 2) * Fib k := by
           calc 4 * triple_rec k
-            _ = 4 * (2 ^ k * Fib k) := by rw [ih3]
+            _ = 4 * (2 ^ k * Fib k) := by rw [ih₀]
             _ = 2 ^ (k + 2) * Fib k := by ring_nf
         have h6 : 6 * triple_rec (k + 1) = 3 * 2 ^ (k + 2) * Fib (k + 1) := by
           calc 6 * triple_rec (k + 1)
-            _ = 6 * (2 ^ (k + 1) * Fib (k + 1)) := by rw [ih3₂]
+            _ = 6 * (2 ^ (k + 1) * Fib (k + 1)) := by rw [ih₁]
             _ = 3 * 2 ^ (k + 2) * Fib (k + 1) := by ring_nf
         have h7 : Fib k + 3 * Fib (k + 1) + Fib (k + 2) = 2 * Fib (k + 3) := by
           calc Fib k + 3 * Fib (k + 1) + Fib (k + 2)
@@ -971,7 +971,7 @@ theorem triple_rec_formula :
           calc triple_rec n
             _ = triple_rec (k + 3) := by rw [h4]
             _ = 4 * triple_rec k + 6 * triple_rec (k + 1) + triple_rec (k + 2) := by rfl
-            _ = 2 ^ (k + 2) * Fib k + 3 * 2 ^ (k + 2) * Fib (k + 1) + 2 ^ (k + 2) * Fib (k + 2) := by rw [h5, h6, ih3₃]
+            _ = 2 ^ (k + 2) * Fib k + 3 * 2 ^ (k + 2) * Fib (k + 1) + 2 ^ (k + 2) * Fib (k + 2) := by rw [h5, h6, ih₂]
             _ = 2 ^ (k + 2) * (Fib k + 3 * Fib (k + 1) + Fib (k + 2)) := by ring_nf
             _ = 2 ^ (k + 2) * (2 * Fib (k + 3)) := by rw [h7]
             _ = 2 ^ (k + 3) * Fib (k + 3) := by ring_nf
