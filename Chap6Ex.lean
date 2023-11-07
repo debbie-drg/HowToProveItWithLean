@@ -815,39 +815,42 @@ theorem Exercise_6_4_8a : ∀ (m n : Nat),
           _ = Fib m + Fib (m + 1) * 1 := by linarith
           _ = Fib m + Fib (m + 1) * Fib 2 := by rw [← h4]
           _ = Fib m + Fib (m + 1) * Fib (1 + 1) := by rfl
-    · obtain (n' : Nat) (h3 : n = n' + 1) from
-        exists_eq_add_one_of_ne_zero h1
-      have h3₂ : n' < n := by linarith
-      obtain (n'' : Nat) (h4 : n = n'' + 2) from
+    · obtain (n' : Nat) (h3 : n = n' + 2) from
         exists_eq_add_two_of_ne_zero_one h1 h2
-      have h4₂ : n'' < n := by linarith
-      have reln' : n' = n'' + 1 := by linarith
-      have h5 : Fib (m + n' + 1) =
-          Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1) := ih n' h3₂
-      have h6 : Fib (m + n'' + 1) =
-          Fib m * Fib n'' + Fib (m + 1) * Fib (n'' + 1) := ih n'' h4₂
-      have h7 : Fib (m + n + 1) = Fib (m + n' + 1) + Fib (m + n'' + 1) := by
+      have h4 : n' + 1 < n := by linarith
+      have h5 : n' < n := by linarith
+      have h6 : Fib (m + n' + 2) =
+          Fib m * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2) := ih (n' + 1) h4
+      have h7 : Fib (m + n' + 1) =
+          Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1) := ih n' h5
+      have h8 : Fib (m + n + 1) = Fib (m + n' + 1) + Fib (m + n' + 2) := by
         calc Fib (m + n + 1)
-          _ = Fib (m + (n' + 1) + 1) := by rw [h3]
-          _ = Fib ((m + n') + 2) := by rfl
-          _ = Fib (m + n') + Fib (m + n' + 1) := by rfl
-          _ = Fib (m + n' + 1) + Fib (m + n') := by rw [add_comm]
-          _ = Fib (m + n' + 1) + Fib (m + n'' + 1) := by
-            nth_rewrite 2 [reln']
-            rfl
-      show Fib (m + n + 1) = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) from
-        calc Fib (m + n + 1)
-          _ = Fib (m + n' + 1) + Fib (m + n'' + 1) := by rw [h7]
-          _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1) + Fib (m + n'' + 1) := by rw [h5]
-          _ = (Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)) + Fib (m + n'' + 1) := by rfl
-          _ = (Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)) + (Fib m * Fib n'' + Fib (m + 1) * Fib (n'' + 1)) := by rw [h6]
-          _ = Fib m * (Fib n' + Fib n'') + Fib (m + 1) * (Fib (n' + 1) + Fib (n'' + 1)) := by linarith
-          _ = Fib m * (Fib (n'' + 1) + Fib n'') +  Fib (m + 1) * (Fib (n'' + 2) + Fib (n'' + 1)) := by rw [reln']
-          _ = Fib m * (Fib n'' + Fib (n'' + 1) ) +  Fib (m + 1) * (Fib (n'' + 1) + Fib (n'' + 2)) := by linarith
-          _ = Fib m * (Fib (n'' + 2)) + Fib (m + 1) * (Fib (n'' + 1) + Fib (n'' + 2)) := by rfl
-          _ = Fib m * (Fib (n'' + 2)) + Fib (m + 1) * (Fib (n'' + 3)) := by rfl
-          _ = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) := by rw [h4]
-  done
+          _ = Fib (m + (n' + 2) + 1) := by rw [h3]
+          _ = Fib ((m + n' + 1) + 2) := by rfl
+          _ = Fib (m + n' + 1) + Fib (m + n' + 2) := by rfl
+      have h9 : Fib (m + n + 1) =
+        Fib m * (Fib n' + Fib (n' + 1)) +  Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2)) := by
+          rw [h6, h7] at h8
+          show Fib (m + n + 1) =
+              Fib m * (Fib n' + Fib (n' + 1)) +  Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2)) from
+            calc Fib (m + n + 1)
+              _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)
+                + (Fib m * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2)) := h8
+              _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)
+                + Fib m * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2) := by ring_nf
+              _ = (Fib m * Fib n' + Fib m * Fib (n' + 1))
+                + (Fib (m + 1) * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2)) := by ring_nf
+              _ =  Fib m * (Fib n' + Fib (n' + 1)) + Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2)) := by ring_nf
+      have h10 : Fib m * (Fib n' + Fib (n' + 1)) = Fib m * Fib n := by
+        calc Fib m * (Fib n' + Fib (n' + 1))
+          _ = Fib m * (Fib (n' + 2)) := by rfl
+          _ = Fib m * Fib n := by rw [h3]
+      have h11 : Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2)) = Fib (m + 1) * Fib (n + 1) := by
+        calc Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2))
+          _ = Fib (m + 1) * (Fib (n' + 3)) := by rfl
+          _ =  Fib (m + 1) * Fib (n + 1) := by rw [h3]
+      rw [h10, h11] at h9
+      exact h9
 
 -- 7.
 theorem Exercise_6_4_8d : ∀ (m k : Nat), Fib m ∣ Fib (m * k) := by
@@ -895,28 +898,23 @@ theorem Fib_like_formula : ∀ (n : Nat), Fib_like n = 2 ^ n := by
   · rw [h1]; rfl
   · by_cases h2 : n = 1
     · rw [h2]; rfl
-    · obtain (n' : Nat) (h3 : n = n' + 1) from
-        exists_eq_add_one_of_ne_zero h1
-      have h3₂ : n' < n := by linarith
-      obtain (n'' : Nat) (h4 : n = n'' + 2) from
+    · obtain (n' : Nat) (h3 : n = n' + 2) from
         exists_eq_add_two_of_ne_zero_one h1 h2
-      have h4₂ : n'' < n := by linarith
-      have reln' : n' = n'' + 1 := by linarith
-      have h5 : Fib_like n' = 2 ^ n' := ih n' h3₂
-      have h6 : Fib_like n'' = 2 ^ n'' := ih n'' h4₂
-      have h7 : Fib_like n = 2 * Fib_like n'' + Fib_like n' := by
+      have h4 : n' < n := by linarith
+      have h5 : n' + 1 < n := by linarith
+      have h6 : Fib_like n' = 2 ^ n' := ih n' h4
+      have h7 : Fib_like (n' + 1) = 2 ^ (n' + 1) := ih (n' + 1) h5
+      have h8 : Fib_like n = 2 * Fib_like n' + Fib_like (n' + 1) := by
         calc Fib_like n
-          _ = Fib_like (n'' + 2) := by rw [h4]
-          _ = 2 * Fib_like n'' + Fib_like (n'' + 1) := by rfl
-          _ = 2 * Fib_like n'' + Fib_like n' := by rw [reln']
-      rw [h5, h6] at h7
+          _ = Fib_like (n' + 2) := by rw [h3]
+          _ = 2 * Fib_like n' + Fib_like (n' + 1) := by rfl
+      rw [h6, h7] at h8
       show Fib_like n = 2 ^ n from
         calc Fib_like n
-          _ = 2 * 2 ^ n'' + 2 ^ n' := by rw [h7]
-          _ = 2 ^ (n'' + 1) + 2 ^ n' := by ring_nf
-          _ = 2 ^ n' + 2 ^ n' := by rw [reln']
-          _ = 2 * 2 ^ n' := by ring_nf
-          _ = 2 ^ (n' + 1) := by ring_nf
+          _ = 2 * 2 ^ n' + 2 ^ (n' + 1) := by rw [h8]
+          _ = 2 ^ (n' + 1) + 2 ^ (n' + 1) := by ring_nf
+          _ = 2 * 2 ^ (n' + 1) := by ring_nf
+          _ = 2 ^ (n' + 2) := by ring_nf
           _ = 2 ^ n := by rw [h3]
   done
 
@@ -982,7 +980,7 @@ theorem triple_rec_formula :
 
 -- 10.
 lemma quot_rem_unique_lemma {m q r q' r' : Nat}
-    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := by
+    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := sorry
 
 theorem quot_rem_unique (m q r q' r' : Nat)
     (h1 : m * q + r = m * q' + r') (h2 : r < m) (h3 : r' < m) :
