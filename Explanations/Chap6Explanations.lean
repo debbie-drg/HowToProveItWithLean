@@ -646,3 +646,260 @@ So we add three consecutive values of `f`, starting with `f k`. The
 notation `Sum i from k to n, f i` is just defined to be
 `sum_seq (n + 1 - k) k f`.
 -/
+
+
+-- Section 6.4. Strong induction
+
+/-
+In strong induction, instead of assuming a property for `n` and proving it
+for `n + 1`, we assume it for every number up to and including `n`. Thus,
+to prove a goal of form `∀ (n : ℕ), P n`, we prove
+`∀ (n : ℕ), (∀ n_1 < n, P n_1) → P n`.
+
+This can be done with the tactic `by_strong_induc`. Let us illustrate.
+
+We prove the existence of divisor and remainder in the integer division.
+-/
+
+theorem Example_6_4_1 : ∀ m > 0, ∀ (n : Nat),
+    ∃ (q r : Nat), n = m * q + r ∧ r < m := by
+  fix m : ℕ; assume h1 : m > 0
+  by_strong_induc
+  fix n : ℕ; assume ih : ∀ (n_1 : ℕ), n_1 < n
+    → ∃ (q : ℕ), ∃ (r : ℕ), n_1 = m * q + r ∧ r < m
+  by_cases h2 : n < m
+  · -- Case n < m
+    apply Exists.intro 0
+    apply Exists.intro n
+    apply And.intro _ h2
+    rw [mul_zero, zero_add]
+  · -- Case ¬n < m
+    have h3 : m ≤ n := by linarith
+    obtain (k : Nat) (h4 : n = k + m) from Nat.exists_eq_add_of_le' h3
+    have h5 : k < n := by linarith
+    have h6 : ∃ (q r : Nat), k = m * q + r ∧ r < m := ih k h5
+    obtain (q' : Nat)
+      (h7 : ∃ (r : Nat), k = m * q' + r ∧ r < m) from h6
+    obtain (r' : Nat) (h8 : k = m * q' + r' ∧ r' < m) from h7
+    apply Exists.intro (q' + 1)
+    apply Exists.intro r'     --Goal : n = m * (q' + 1) + r' ∧ r' < m
+    apply And.intro _ h8.right
+    show n = m * (q' + 1) + r' from
+      calc n
+        _ = k + m := h4
+        _ = m * q' + r' + m := by rw [h8.left]
+        _ = m * (q' + 1) + r' := by ring
+  done
+
+/-
+Here, we are using the following results of the naturals.
+-/
+
+#check Nat.exists_eq_add_of_le
+  -- ∀ {m n : ℕ}, m ≤ n → ∃ (k : ℕ), n = m + k
+
+#check Nat.exists_eq_add_of_le'
+  -- ∀ {m n : ℕ}, m ≤ n → ∃ (k : ℕ), n = k + m
+
+/-
+The integer division operator is just the integer quotient in Lean, `n / m`.
+The remainder can be obtained by `n % m`.
+Note that Lean already includes results on the properties of these numbers
+-/
+
+#check Nat.div_add_mod
+  -- ∀ (m n : ℕ), n * (m / n) + m % n = m
+
+#check Nat.mod_lt
+  -- ∀ (x : ℕ) {y : ℕ}, y > 0 → x % y < y
+
+/-
+Note that Lean uses the definitions `n / 0 = 0` and `n % 0 = n`, which makes
+adding additional requirements to the results above unnecessary.
+
+If we instead want to obtain division of reals we instead explicitly
+declare the types: `(5 : Real) / (2 : Real)` is `2.5`.
+-/
+
+/-
+There is also a strong version of recursion. To show this, let us introduce
+the definition for the Fibonacci sequence.
+-/
+
+def Fib (n : Nat) : Nat :=
+  match n with
+    | 0 => 0
+    | 1 => 1
+    | k + 2 => Fib k + Fib (k + 1)
+
+/-
+The induction is strong as we need the two previous terms, and not just
+the last one. Let us prove that `Fib n < 2 ^ n` by strong induction.
+To do so, we need to use the following pre-existing results.
+-/
+
+#check Nat.pos_of_ne_zero
+  -- ∀ {n : ℕ}, n ≠ 0 → 0 < n
+
+#check lt_of_le_of_ne
+  -- ∀ {α : Type u_1} [inst : PartialOrder α] {a b : α},
+                    -- a ≤ b → a ≠ b → a < b
+
+#check lt_of_le_of_ne'
+  -- ∀ {α : Type u_1} [inst : PartialOrder α] {a b : α},
+                    -- a ≤ b → b ≠ a → a < b
+
+/-
+Note further that Lean treats `a < b` as meaning `a + 1 ≤ b`.
+-/
+
+lemma exists_eq_add_one_of_ne_zero {n : Nat}
+    (h1 : n ≠ 0) : ∃ (k : Nat), n = k + 1 := by
+  have h2 : 1 ≤ n := Nat.pos_of_ne_zero h1
+  exact Nat.exists_eq_add_of_le' h2
+  done
+
+theorem exists_eq_add_two_of_ne_zero_one {n : Nat}
+    (h1 : n ≠ 0) (h2 : n ≠ 1) : ∃ (k : Nat), n = k + 2 := by
+  have h3 : 1 ≤ n := Nat.pos_of_ne_zero h1
+  have h4 : 2 ≤ n := lt_of_le_of_ne' h3 h2
+  exact Nat.exists_eq_add_of_le' h4
+  done
+
+/-
+We can now proceed to proving the result.
+-/
+
+example : ∀ (n : Nat), Fib n < 2 ^ n := by
+  by_strong_induc
+  fix n : Nat
+  assume ih : ∀ (n₁ : ℕ), n₁ < n → Fib n₁ < 2 ^ n₁
+  by_cases h1 : n = 0
+  · -- Case n = 0
+    rw [h1]; norm_num
+  · -- Case ¬n = 0
+    by_cases h2 : n = 1
+    · -- Case n = 1
+      rw [h2]; norm_num
+    · -- Case ¬n = 1. We now have n ≥ 2
+      obtain (k : Nat) (h3 : n = k + 2) from
+        exists_eq_add_two_of_ne_zero_one h1 h2
+      have h4 : k < n := by linarith
+      have h5 : Fib k < 2 ^ k := ih k h4
+      have h6 : k + 1 < n := by linarith
+      have h7 : Fib (k + 1) < 2 ^ (k + 1) := ih (k + 1) h6
+      rw [h3]
+      show Fib (k + 2) < 2 ^ (k + 2) from
+        calc Fib (k + 2)
+          _ = Fib k + Fib (k + 1) := by rfl
+          _ < 2 ^ k + Fib (k + 1) := by rel [h5]
+          _ < 2 ^ k + 2 ^ (k + 1) := by rel [h7]
+          _ ≤ 2 ^ k + 2 ^ (k + 1) + 2 ^ k := by linarith
+          _ = 2 ^ (k + 2) := by ring
+  done
+
+/-
+Strong induction can also be used to prove results that may not seem to
+have form `∀ (n : Nat), ...` at first. We illustrate that by showing that
+ℕ is well-ordered. That is, we show that if `S : Set Nat` is non-empty
+it has a smallest element. We prove the contrapositive.
+-/
+
+theorem well_ord_princ (S : Set Nat) : (∃ (n : Nat), n ∈ S) →
+    ∃ (n : Nat), n ∈ S ∧ ∀ (m : Nat), m ∈ S → n ≤ m := by
+  contrapos
+  assume h1 : ¬∃ (n : ℕ), n ∈ S ∧ ∀ (m : ℕ), m ∈ S → n ≤ m
+  quant_neg
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n → ¬n_1 ∈ S
+  contradict h1 with h2
+  apply Exists.intro n
+  apply And.intro h2
+  fix m : ℕ
+  assume h3 : m ∈ S
+  have h4 : m < n → ¬m ∈ S := ih m
+  contrapos at h4
+  have h5 : ¬m < n := h4 h3
+  linarith
+  done
+
+/-
+Using the well ordering principle, we can show that the square root of
+two is irrational. The procedure is as follows: if `√2` were rational,
+there would exist `p` and `q` naturals such that `q ≠ 0` and `p / q = √2`.
+Therefore, `p² = 2q²`. So we can prove that `√2` is irrational by proving
+that two such naturals cannot exist.
+
+We use the even definition, which was introduced in the exercises for
+Section 6.1
+-/
+
+def nat_even (n : Nat) : Prop := ∃ (k : Nat), n = 2 * k
+
+/-
+We also use the following lemma, whose proof is in the exercises.
+-/
+
+lemma sq_even_iff_even (n : Nat) : nat_even (n * n) ↔ nat_even n := by
+  sorry
+
+/-
+We also need the following theorem.
+-/
+
+#check mul_left_cancel_iff_of_pos
+  -- ∀ {α : Type u_1} {a b c : α}
+            --  [inst : MulZeroClass α] [inst_1 : PartialOrder α]
+            --  [inst_2 : PosMulMonoRev α],
+            --  0 < a → (a * b = a * c ↔ b = c)
+
+/-
+Proving that `√2` is irrational means proving that
+`¬∃ (q p : Nat), p * p = 2 * (q * q) ∧ q ≠ 0`
+Equivalently, we can prove that the set
+`S = { q : Nat | ∃ (p : Nat), p * p = 2 * (q * q) ∧ q ≠ 0 }`
+is empty. We can do so by contradiction. If we assumed that it was
+non-empty, by the well-ordering principle it would have a smallest element.
+We show that this leads to a contradiction.
+-/
+
+theorem Theorem_6_4_5 :
+    ¬∃ (q p : Nat), p * p = 2 * (q * q) ∧ q ≠ 0 := by
+  set S : Set Nat :=
+    { q : Nat | ∃ (p : Nat), p * p = 2 * (q * q) ∧ q ≠ 0 }
+  by_contra h1
+  have h2 : ∃ (q : Nat), q ∈ S := h1
+  have h3 : ∃ (q : Nat), q ∈ S ∧ ∀ (r : Nat), r ∈ S → q ≤ r :=
+    well_ord_princ S h2
+  obtain (q : Nat) (h4 : q ∈ S ∧ ∀ (r : Nat), r ∈ S → q ≤ r) from h3
+  have qinS : q ∈ S := h4.left
+  have qleast : ∀ (r : ℕ), r ∈ S → q ≤ r := h4.right
+  define at qinS
+  obtain (p : Nat) (h5 : p * p = 2 * (q * q) ∧ q ≠ 0) from qinS
+  have pqsqrt2 : p * p = 2 * (q * q) := h5.left
+  have qne0 : q ≠ 0 := h5.right
+  have h6 : nat_even (p * p) := Exists.intro (q * q) pqsqrt2
+  rw [sq_even_iff_even p] at h6
+  obtain (p' : Nat) (p'halfp : p = 2 * p') from h6
+  have h7 : 2 * (2 * (p' * p')) = 2 * (q * q) := by
+    rw [←pqsqrt2, p'halfp]
+    ring
+  have h8 : 2 > 0 := by norm_num
+  rw [mul_left_cancel_iff_of_pos h8] at h7
+  have h9 : nat_even (q * q) := Exists.intro (p' * p') h7.symm
+  rw [sq_even_iff_even q] at h9
+  obtain (q' : Nat) (q'halfq : q = 2 * q') from h9
+  have h10 : 2 * (p' * p') = 2 * (2 * (q' * q')) := by
+    rw [h7, q'halfq]
+    ring
+  rw [mul_left_cancel_iff_of_pos h8] at h10
+  have q'ne0 : q' ≠ 0 := by
+    contradict qne0 with h11
+    rw [q'halfq, h11]
+  have q'inS : q' ∈ S := Exists.intro p' (And.intro h10 q'ne0)
+  have qleq' : q ≤ q' := qleast q' q'inS
+  rewrite [q'halfq] at qleq'
+  contradict q'ne0
+  linarith
+  done

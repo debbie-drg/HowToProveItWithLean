@@ -600,31 +600,285 @@ theorem Exercise_6_3_16 : ∀ (n : Nat),
 -- 1.
 --Hint: Use Exercise_6_1_16a1 and Exercise_6_1_16a2
 lemma sq_even_iff_even (n : Nat) :
-    nat_even (n * n) ↔ nat_even n := sorry
+    nat_even (n * n) ↔ nat_even n := by
+  apply Iff.intro
+  · assume h1 : nat_even (n * n)
+    have h2 : ¬(nat_even (n * n) ∧ nat_odd (n * n)) := Exercise_6_1_16a2 (n * n)
+    have h3 : (nat_even n ∨ nat_odd n) := Exercise_6_1_16a1 n
+    by_contra h4
+    disj_syll h3 h4
+    define at h3
+    obtain (k : ℕ) (h5 : n = 2 * k + 1) from h3
+    have h6 : nat_odd (n * n) := by
+      define
+      apply Exists.intro (2 * k ^ 2 + 2 * k)
+      rw [h5]
+      ring
+    apply h2; exact And.intro h1 h6
+  · assume h1 : nat_even n
+    define at h1
+    obtain (k : ℕ) (h2 : n = 2 * k) from h1
+    define
+    apply Exists.intro (k * n)
+    rw [h2]
+    linarith
+  done
 
 -- 2.
 --This theorem proves that the square root of 6 is irrational
 theorem Exercise_6_4_4a :
-    ¬∃ (q p : Nat), p * p = 6 * (q * q) ∧ q ≠ 0 := sorry
+    ¬∃ (q p : Nat), p * p = 6 * (q * q) ∧ q ≠ 0 := by
+  set S : Set Nat :=
+    { q : Nat | ∃ (p : Nat), p * p = 6 * (q * q) ∧ q ≠ 0 }
+  by_contra h1
+  have h2 : ∃ (q : Nat), q ∈ S := h1
+  have h3 : ∃ (q : Nat), q ∈ S ∧ ∀ (r : Nat), r ∈ S → q ≤ r :=
+    well_ord_princ S h2
+  obtain (q : Nat) (h4 : q ∈ S ∧ ∀ (r : Nat), r ∈ S → q ≤ r) from h3
+  have qinS : q ∈ S := h4.left
+  have qleast : ∀ (r : ℕ), r ∈ S → q ≤ r := h4.right
+  define at qinS
+  obtain (p : Nat) (h5 : p * p = 6 * (q * q) ∧ q ≠ 0) from qinS
+  have pqsqrt6 : p * p = 6 * (q * q) := h5.left
+  have qne0 : q ≠ 0 := h5.right
+  have h6 : nat_even (p * p) := by
+    apply Exists.intro (3 * q * q)
+    rw [pqsqrt6]
+    linarith
+  rw [sq_even_iff_even p] at h6
+  obtain (p' : Nat) (p'halfp : p = 2 * p') from h6
+  have h7 : 2 * (2 * (p' * p')) = 2 * (3 * (q * q)) := by
+    have h8 : 2 * (3 * (q * q)) = 6 * (q * q) := by ring
+    rw [h8, ←pqsqrt6, p'halfp]
+    ring
+  have h8 : 2 > 0 := by norm_num
+  rw [mul_left_cancel_iff_of_pos h8] at h7
+  have h9 : nat_even (3 * (q * q)) := Exists.intro (p' * p') h7.symm
+  have h10 : nat_even (q * q) := by
+    by_contra h10
+    disj_syll (Exercise_6_1_16a1 (q * q)) h10 with h11
+    define at h11
+    obtain (k : ℕ) (h12 : q * q = 2 * k + 1) from h11
+    have h13 : nat_odd (3 * (q * q)) := by
+      define
+      apply Exists.intro (3 * k + 1)
+      rw [h12]; ring
+    apply Exercise_6_1_16a2 (3 * (q * q))
+    exact And.intro h9 h13
+  rw [sq_even_iff_even q] at h10
+  obtain (q' : Nat) (q'halfq : q = 2 * q') from h10
+  have h11 : 2 * (p' * p') = 2 * (6 * (q' * q')) := by
+    rw [h7, q'halfq]
+    ring
+  rw [mul_left_cancel_iff_of_pos h8] at h11
+  have q'ne0 : q' ≠ 0 := by
+    contradict qne0 with h12
+    rw [q'halfq, h12]
+  have q'inS : q' ∈ S := Exists.intro p' (And.intro h11 q'ne0)
+  have qleq' : q ≤ q' := qleast q' q'inS
+  rewrite [q'halfq] at qleq'
+  contradict q'ne0
+  linarith
+  done
 
 -- 3.
 theorem Exercise_6_4_5 :
-    ∀ n ≥ 12, ∃ (a b : Nat), 3 * a + 7 * b = n := sorry
+    ∀ n ≥ 12, ∃ (a b : Nat), 3 * a + 7 * b = n := by
+  by_strong_induc
+  fix n : ℕ
+  assume ih :  ∀ (n₁ : ℕ), n₁ < n → n₁ ≥ 12
+      → ∃ (a : ℕ), ∃ (b : ℕ), 3 * a + 7 * b = n₁
+  assume h1 : n ≥ 12
+  by_cases h2 : n = 12
+  · -- Case n = 12
+    apply Exists.intro 4; apply Exists.intro 0
+    rw [h2]
+  · -- Case n > 12
+    have h3 : n > 12 := lt_of_le_of_ne' h1 h2
+    have h4 : n ≠ 0 := by linarith
+    obtain (n' : ℕ) (h5 : n = n' + 1)
+      from exists_eq_add_one_of_ne_zero h4
+    have h6 : n > n' := by linarith
+    have h7 : n' ≥ 12 := by linarith
+    obtain (a : ℕ) (h8 : ∃ (b : ℕ), 3 * a + 7 * b = n')
+      from ih n' h6 h7
+    obtain (b : ℕ) (h9 : 3 * a + 7 * b = n') from h8
+    by_cases h10 : a ≤ 1
+    · have h11₁ : b ≠ 0 := by linarith
+      have h11₂ : b ≠ 1 := by linarith
+      obtain (b' : Nat) (h11 : b = b' + 2) from
+        exists_eq_add_two_of_ne_zero_one h11₁ h11₂
+      apply Exists.intro (a + 5)
+      apply Exists.intro b'
+      show 3 * (a + 5) + 7 * b' = n from
+        calc 3 * (a + 5) + 7 * b'
+          _ = 3 * a + 7 * (b' + 2) + 1 := by linarith
+          _ = 3 * a + 7 * b + 1 := by rw [h11]
+          _ = n' + 1 := by rw [h9]
+          _ = n := by rw [← h5]
+    · have h11₁ : a ≠ 0 := by linarith
+      have h11₂ : a ≠ 1 := by linarith
+      obtain (a' : Nat) (h11 : a = a' + 2) from
+        exists_eq_add_two_of_ne_zero_one h11₁ h11₂
+      apply Exists.intro a'
+      apply Exists.intro (b + 1)
+      show 3 * a' + 7 * (b + 1) = n from
+        calc 3 * a' + 7 * (b + 1)
+          _ = 3 * (a' + 2) + 7 * b + 1 := by linarith
+          _ = 3 * a + 7 * b + 1 := by rw [h11]
+          _ = n' + 1 := by rw [h9]
+          _ = n := by rw [← h5]
+  done
 
 -- 4.
 theorem Exercise_6_4_7a : ∀ (n : Nat),
-    (Sum i from 0 to n, Fib i) + 1 = Fib (n + 2) := sorry
+    (Sum i from 0 to n, Fib i) + 1 = Fib (n + 2) := by
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n
+      → (Sum i from 0 to n_1, Fib i) + 1 = Fib (n_1 + 2)
+  by_cases h1 : n = 0
+  · rw [h1, sum_base]; rfl
+  · by_cases h2 : n = 1
+    · rw [h2, sum_from_zero_step, sum_base]
+      rfl
+    · obtain (n' : Nat) (h3 : n = n' + 2) from
+        exists_eq_add_two_of_ne_zero_one h1 h2
+      have h4 : n' < n := by linarith
+      have h5 : (Sum i from 0 to n', Fib i) + 1 = Fib (n' + 2) := ih n' h4
+      rw [h3]
+      have h6 : 0 ≤ n' + 1 := by linarith
+      have h7 : 0 ≤ n' := by linarith
+      rw [sum_step h6, sum_step h7]
+      show (Sum i from 0 to n', Fib i) + Fib (n' + 1) + Fib (n' + 1 + 1) + 1
+          = Fib (n' + 2 + 2) from
+        calc (Sum i from 0 to n', Fib i) + Fib (n' + 1) + Fib (n' + 1 + 1) + 1
+          _ = (Sum i from 0 to n', Fib i) + 1 + Fib (n' + 1) + Fib (n' + 1 + 1) := by linarith
+          _ = Fib (n' + 2) + Fib (n' + 1) + Fib (n' + 1 + 1) := by rw [h5]
+          _ = Fib (n' + 1) + Fib (n' + 2) + Fib (n' + 1 + 1) := by linarith
+          _ = Fib (n' + 3) + Fib (n' + 1 + 1) := by rfl
+          _ = Fib (n' + 2) + Fib (n' + 3) := by linarith
+          _ = Fib (n' + 4) := by rfl
+  done
 
 -- 5.
 theorem Exercise_6_4_7c : ∀ (n : Nat),
-    Sum i from 0 to n, Fib (2 * i + 1) = Fib (2 * n + 2) := sorry
+    Sum i from 0 to n, Fib (2 * i + 1) = Fib (2 * n + 2) := by
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n
+    → Sum i from 0 to n_1, Fib (2 * i + 1) = Fib (2 * n_1 + 2)
+  by_cases h1 : n = 0
+  · rw [h1, sum_base]; rfl
+  · by_cases h2 : n = 1
+    · rw [h2, sum_from_zero_step, sum_base]
+      rfl
+    · obtain (n' : Nat) (h3 : n = n' + 2) from
+        exists_eq_add_two_of_ne_zero_one h1 h2
+      have h4 : n' < n := by linarith
+      have h5 : Sum i from 0 to n', Fib (2 * i + 1) = Fib (2 * n' + 2)
+        := ih n' h4
+      rw [h3]
+      have h6 : 0 ≤ n' + 1 := by linarith
+      have h7 : 0 ≤ n' := by linarith
+      rw [sum_step h6, sum_step h7, h5]
+      show Fib (2 * n' + 2) + Fib (2 * (n' + 1) + 1) + Fib (2 * (n' + 1 + 1) + 1)
+          = Fib (2 * (n' + 2) + 2) from
+        calc Fib (2 * n' + 2) + Fib (2 * (n' + 1) + 1) + Fib (2 * (n' + 1 + 1) + 1)
+          _ = Fib (2 * n' + 2) + Fib (2 * n' + 3) + Fib (2 * n' + 5) := by ring_nf
+          _ = Fib (2 * n' + 4) + Fib (2 * n' + 5) := by rfl
+          _ = Fib (2 * n' + 6) := by rfl
+          _ = Fib (2 * (n' + 2) + 2) := by ring_nf
+  done
 
 -- 6.
 theorem Exercise_6_4_8a : ∀ (m n : Nat),
-    Fib (m + n + 1) = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) := sorry
+    Fib (m + n + 1) = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) := by
+  fix m : ℕ
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n → Fib (m + n_1 + 1) = Fib m * Fib n_1 + Fib (m + 1) * Fib (n_1 + 1)
+  by_cases h1 : n = 0
+  · rw [h1]
+    rw [add_zero, zero_add]
+    have h2 : Fib 0 = 0 := rfl; rw [h2]
+    have h3 : Fib 1 = 1 := rfl; rw [h3]
+    rw [mul_zero, zero_add, mul_one]
+  · by_cases h2 : n = 1
+    · rw [h2]
+      have h3 : Fib 1 = 1 := rfl; rw [h3, mul_one]
+      have h4 : Fib 2 = 1 := rfl
+      show Fib (m + 1 + 1) = Fib m + Fib (m + 1) * Fib (1 + 1) from
+        calc Fib (m + 1 + 1)
+          _ = Fib (m + 2) := by rfl
+          _ = Fib m + Fib (m + 1) := by rfl
+          _ = Fib m + Fib (m + 1) * 1 := by linarith
+          _ = Fib m + Fib (m + 1) * Fib 2 := by rw [← h4]
+          _ = Fib m + Fib (m + 1) * Fib (1 + 1) := by rfl
+    · obtain (n' : Nat) (h3 : n = n' + 1) from
+        exists_eq_add_one_of_ne_zero h1
+      have h3₂ : n' < n := by linarith
+      obtain (n'' : Nat) (h4 : n = n'' + 2) from
+        exists_eq_add_two_of_ne_zero_one h1 h2
+      have h4₂ : n'' < n := by linarith
+      have reln' : n' = n'' + 1 := by linarith
+      have h5 : Fib (m + n' + 1) =
+          Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1) := ih n' h3₂
+      have h6 : Fib (m + n'' + 1) =
+          Fib m * Fib n'' + Fib (m + 1) * Fib (n'' + 1) := ih n'' h4₂
+      have h7 : Fib (m + n + 1) = Fib (m + n' + 1) + Fib (m + n'' + 1) := by
+        calc Fib (m + n + 1)
+          _ = Fib (m + (n' + 1) + 1) := by rw [h3]
+          _ = Fib ((m + n') + 2) := by rfl
+          _ = Fib (m + n') + Fib (m + n' + 1) := by rfl
+          _ = Fib (m + n' + 1) + Fib (m + n') := by rw [add_comm]
+          _ = Fib (m + n' + 1) + Fib (m + n'' + 1) := by
+            nth_rewrite 2 [reln']
+            rfl
+      show Fib (m + n + 1) = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) from
+        calc Fib (m + n + 1)
+          _ = Fib (m + n' + 1) + Fib (m + n'' + 1) := by rw [h7]
+          _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1) + Fib (m + n'' + 1) := by rw [h5]
+          _ = (Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)) + Fib (m + n'' + 1) := by rfl
+          _ = (Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)) + (Fib m * Fib n'' + Fib (m + 1) * Fib (n'' + 1)) := by rw [h6]
+          _ = Fib m * (Fib n' + Fib n'') + Fib (m + 1) * (Fib (n' + 1) + Fib (n'' + 1)) := by linarith
+          _ = Fib m * (Fib (n'' + 1) + Fib n'') +  Fib (m + 1) * (Fib (n'' + 2) + Fib (n'' + 1)) := by rw [reln']
+          _ = Fib m * (Fib n'' + Fib (n'' + 1) ) +  Fib (m + 1) * (Fib (n'' + 1) + Fib (n'' + 2)) := by linarith
+          _ = Fib m * (Fib (n'' + 2)) + Fib (m + 1) * (Fib (n'' + 1) + Fib (n'' + 2)) := by rfl
+          _ = Fib m * (Fib (n'' + 2)) + Fib (m + 1) * (Fib (n'' + 3)) := by rfl
+          _ = Fib m * Fib n + Fib (m + 1) * Fib (n + 1) := by rw [h4]
+  done
 
 -- 7.
-theorem Exercise_6_4_8d : ∀ (m k : Nat), Fib m ∣ Fib (m * k) := sorry
+theorem Exercise_6_4_8d : ∀ (m k : Nat), Fib m ∣ Fib (m * k) := by
+  fix m : ℕ
+  by_induc
+  · -- Base case
+    define; apply Exists.intro 0; rfl
+  · -- Induction step
+    fix k : ℕ
+    assume ih : Fib m ∣ Fib (m * k)
+    by_cases h1 : m = 0
+    · rw [h1, zero_mul]
+    · by_cases h2 : k = 0
+      · rw [h2, zero_add, mul_one]
+      · have h3 : ¬m * k = 0 := by
+          by_contra h3
+          have h4 : m = 0 ∨ k = 0 := Nat.eq_zero_of_mul_eq_zero h3
+          disj_syll h4 h1
+          apply h2; exact h4
+        obtain (j : ℕ) (h4 : m * k = j + 1) from exists_eq_add_one_of_ne_zero h3
+        have h5 : m * (k + 1) = j + m + 1 := by linarith
+        have h6 : Fib (j + m + 1) = Fib j * Fib m + Fib (j + 1) * Fib (m + 1)
+          := Exercise_6_4_8a j m
+        rw [← h5] at h6
+        rw [h6, ← h4]
+        define at ih; obtain (c : ℕ) (h7 : Fib (m * k) = Fib m * c) from ih
+        define
+        rw [h7]
+        apply Exists.intro (Fib j + c * Fib (m + 1))
+        linarith
+  done
 
 -- 8.
 def Fib_like (n : Nat) : Nat :=
@@ -633,7 +887,38 @@ def Fib_like (n : Nat) : Nat :=
     | 1 => 2
     | k + 2 => 2 * (Fib_like k) + Fib_like (k + 1)
 
-theorem Fib_like_formula : ∀ (n : Nat), Fib_like n = 2 ^ n := sorry
+theorem Fib_like_formula : ∀ (n : Nat), Fib_like n = 2 ^ n := by
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n → Fib_like n_1 = 2 ^ n_1
+  by_cases h1 : n = 0
+  · rw [h1]; rfl
+  · by_cases h2 : n = 1
+    · rw [h2]; rfl
+    · obtain (n' : Nat) (h3 : n = n' + 1) from
+        exists_eq_add_one_of_ne_zero h1
+      have h3₂ : n' < n := by linarith
+      obtain (n'' : Nat) (h4 : n = n'' + 2) from
+        exists_eq_add_two_of_ne_zero_one h1 h2
+      have h4₂ : n'' < n := by linarith
+      have reln' : n' = n'' + 1 := by linarith
+      have h5 : Fib_like n' = 2 ^ n' := ih n' h3₂
+      have h6 : Fib_like n'' = 2 ^ n'' := ih n'' h4₂
+      have h7 : Fib_like n = 2 * Fib_like n'' + Fib_like n' := by
+        calc Fib_like n
+          _ = Fib_like (n'' + 2) := by rw [h4]
+          _ = 2 * Fib_like n'' + Fib_like (n'' + 1) := by rfl
+          _ = 2 * Fib_like n'' + Fib_like n' := by rw [reln']
+      rw [h5, h6] at h7
+      show Fib_like n = 2 ^ n from
+        calc Fib_like n
+          _ = 2 * 2 ^ n'' + 2 ^ n' := by rw [h7]
+          _ = 2 ^ (n'' + 1) + 2 ^ n' := by ring_nf
+          _ = 2 ^ n' + 2 ^ n' := by rw [reln']
+          _ = 2 * 2 ^ n' := by ring_nf
+          _ = 2 ^ (n' + 1) := by ring_nf
+          _ = 2 ^ n := by rw [h3]
+  done
 
 -- 9.
 def triple_rec (n : Nat) : Nat :=
@@ -644,12 +929,60 @@ def triple_rec (n : Nat) : Nat :=
     | k + 3 => 4 * triple_rec k +
                 6 * triple_rec (k + 1) + triple_rec (k + 2)
 
+lemma exists_eq_add_three_of_ne_zero_one_two {n : Nat}
+    (h1 : n ≠ 0) (h2 : n ≠ 1) (h3 : n ≠ 2) : ∃ (k : Nat), n = k + 3 := by
+  have h4 : 1 ≤ n := Nat.pos_of_ne_zero h1
+  have h5 : 2 ≤ n := lt_of_le_of_ne' h4 h2
+  have h6 : 3 ≤ n := lt_of_le_of_ne' h5 h3
+  exact Nat.exists_eq_add_of_le' h6
+
 theorem triple_rec_formula :
-    ∀ (n : Nat), triple_rec n = 2 ^ n * Fib n := sorry
+    ∀ (n : Nat), triple_rec n = 2 ^ n * Fib n := by
+  by_strong_induc
+  fix n : ℕ
+  assume ih : ∀ (n_1 : ℕ), n_1 < n → triple_rec n_1 = 2 ^ n_1 * Fib n_1
+  by_cases h1 : n = 0
+  · rw [h1]; rfl
+  · by_cases h2 : n = 1
+    · rw [h2]; rfl
+    · by_cases h3 : n = 2
+      · rw [h3]; rfl
+      · obtain (k : ℕ) (h4 : n = k + 3)
+          from exists_eq_add_three_of_ne_zero_one_two h1 h2 h3
+        have h4₂ : n > k := by linarith
+        have ih3 : triple_rec k = 2 ^ k * Fib k := ih k h4₂
+        have h4₃ : n > k + 1 := by linarith
+        have ih3₂ : triple_rec (k + 1) = 2 ^ (k + 1) * Fib (k + 1) := ih (k + 1) h4₃
+        have h4₄ : n > k + 2 := by linarith
+        have ih3₃ : triple_rec (k + 2) = 2 ^ (k + 2) * Fib (k + 2) := ih (k + 2) h4₄
+        have h5 : 4 * triple_rec k = 2 ^ (k + 2) * Fib k := by
+          calc 4 * triple_rec k
+            _ = 4 * (2 ^ k * Fib k) := by rw [ih3]
+            _ = 2 ^ (k + 2) * Fib k := by ring_nf
+        have h6 : 6 * triple_rec (k + 1) = 3 * 2 ^ (k + 2) * Fib (k + 1) := by
+          calc 6 * triple_rec (k + 1)
+            _ = 6 * (2 ^ (k + 1) * Fib (k + 1)) := by rw [ih3₂]
+            _ = 3 * 2 ^ (k + 2) * Fib (k + 1) := by ring_nf
+        have h7 : Fib k + 3 * Fib (k + 1) + Fib (k + 2) = 2 * Fib (k + 3) := by
+          calc Fib k + 3 * Fib (k + 1) + Fib (k + 2)
+            _ = (Fib k + Fib (k + 1)) + (2 * Fib (k + 1)) + Fib (k + 2) := by ring_nf
+            _ = Fib (k + 2) + (2 * Fib (k + 1)) + Fib (k + 2) := by rfl
+            _ = 2 * (Fib (k + 1) + Fib (k + 2)) := by ring_nf
+            _ = 2 * Fib (k + 3) := by rfl
+        show triple_rec n = 2 ^ n * Fib n from
+          calc triple_rec n
+            _ = triple_rec (k + 3) := by rw [h4]
+            _ = 4 * triple_rec k + 6 * triple_rec (k + 1) + triple_rec (k + 2) := by rfl
+            _ = 2 ^ (k + 2) * Fib k + 3 * 2 ^ (k + 2) * Fib (k + 1) + 2 ^ (k + 2) * Fib (k + 2) := by rw [h5, h6, ih3₃]
+            _ = 2 ^ (k + 2) * (Fib k + 3 * Fib (k + 1) + Fib (k + 2)) := by ring_nf
+            _ = 2 ^ (k + 2) * (2 * Fib (k + 3)) := by rw [h7]
+            _ = 2 ^ (k + 3) * Fib (k + 3) := by ring_nf
+            _ = 2 ^ n * Fib n := by rw [h4]
+  done
 
 -- 10.
 lemma quot_rem_unique_lemma {m q r q' r' : Nat}
-    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := sorry
+    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := by
 
 theorem quot_rem_unique (m q r q' r' : Nat)
     (h1 : m * q + r = m * q' + r') (h2 : r < m) (h3 : r' < m) :
