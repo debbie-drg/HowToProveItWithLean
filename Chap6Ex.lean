@@ -422,26 +422,124 @@ theorem Example_6_2_2 {A : Type} (R : BinRel A)
 -- 1.
 theorem Exercise_6_3_4 : ∀ (n : Nat),
     3 * (Sum i from 0 to n, (2 * i + 1) ^ 2) =
-    (n + 1) * (2 * n + 1) * (2 * n + 3) := sorry
+    (n + 1) * (2 * n + 1) * (2 * n + 3) := by
+  by_induc
+  · -- Base case
+    rw [sum_base]
+    linarith
+  · -- Induction step
+    fix n : ℕ
+    assume ih : 3 * Sum i from 0 to n, (2 * i + 1) ^ 2
+      = (n + 1) * (2 * n + 1) * (2 * n + 3)
+    rw [sum_from_zero_step, mul_add, ih]
+    linarith
+  done
 
 -- 2.
 theorem Exercise_6_3_7b (f : Nat → Real) (c : Real) : ∀ (n : Nat),
-    Sum i from 0 to n, c * f i = c * Sum i from 0 to n, f i := sorry
+    Sum i from 0 to n, c * f i = c * Sum i from 0 to n, f i := by
+  by_induc
+  · rw [sum_base, sum_base]
+  · fix n : ℕ
+    assume ih : Sum i from 0 to n, c * f i = c * Sum i from 0 to n, f i
+    rw [sum_from_zero_step, ih, sum_from_zero_step]
+    linarith
+  done
 
 -- 3.
-theorem fact_pos : ∀ (n : Nat), fact n ≥ 1 := sorry
+theorem fact_pos : ∀ (n : Nat), fact n ≥ 1 := by
+  by_induc
+  · norm_num
+  · fix n : ℕ
+    assume ih : fact n ≥ 1
+    show fact (n + 1) ≥ 1 from
+      calc fact (n + 1)
+        _ = (n + 1) * fact n := by rfl
+        _ ≥ (n + 1) * 1 := by rel [ih]
+        _ = n + 1 := by rw [mul_one]
+        _ ≥ 1 := by linarith
+  done
 
 -- 4.
+theorem power_law_nat : ∀ (a : Nat) (m n : Nat),
+    a ^ (m + n) = a ^ m * a ^ n := by
+  fix a : Nat; fix m : Nat; fix n : Nat
+  ring
+  done
+
 --Hint:  Use the theorem fact_pos from the previous exercise
 theorem Exercise_6_3_13a (k : Nat) : ∀ (n : Nat),
-    fact (k ^ 2 + n) ≥ k ^ (2 * n) := sorry
+    fact (k ^ 2 + n) ≥ k ^ (2 * n) := by
+  by_induc
+  · -- Base case
+    have h : k ^ (2 * 0) = 1 := by
+      rw [mul_zero, pow_zero]
+    rw [h]
+    exact fact_pos (k ^ 2 + 0)
+  · -- Induction step
+    fix n : ℕ
+    assume ih : fact (k ^ 2 + n) ≥ k ^ (2 * n)
+    have h1 : k ≥ 0 := by linarith
+    have h2 : k ^ (2 * n) ≥ 0 := pow_nonneg h1 (2 * n)
+    have h3 : n + 1 ≥ 0 := by linarith
+    have h4 : (n + 1) * k ^ (2 * n) ≥ 0 := mul_nonneg h3 h2
+    have h5 : 2 + 2 * n = 2 * (n + 1) := by linarith
+    show fact (k ^ 2 + (n + 1)) ≥ k ^ (2 * (n + 1)) from
+      calc fact (k ^ 2 + (n + 1))
+        _ = (k ^ 2 + (n + 1)) * fact (k ^ 2 + n) := by rfl
+        _ ≥ (k ^ 2 + (n + 1)) * k ^ (2 * n) := by rel [ih]
+        _ = (n + 1) * k ^ (2 * n) + (k ^ 2) * (k ^ (2 * n)) := by linarith
+        _ ≥ (k ^ 2) * (k ^ (2 * n)) := by linarith
+        _ = k ^ (2 + 2 * n) := (power_law_nat k 2 (2 * n)).symm
+        _ = k ^ (2 * (n + 1)) := by rw [h5]
+  done
 
 -- 5.
 --Hint:  Use the theorem in the previous exercise.
 --You may find it useful to first prove a lemma:
 --∀ (k : Nat), 2 * k ^ 2 + 1 ≥ k
+lemma for_Exercise_6_3_13b : ∀ (k : Nat), 2 * k ^ 2 + 1 ≥ k := by
+  by_induc
+  · linarith
+  · fix k : ℕ
+    assume ih : 2 * k ^ 2 + 1 ≥ k
+    have h1 : k ≥ 0 := by linarith
+    have h2 : 4 * k + 1 ≥ 0 := by linarith
+    show 2 * (k + 1) ^ 2 + 1 ≥ k + 1 from
+      calc 2 * (k + 1) ^ 2 + 1
+        _ = 2 * k ^ 2 + 4 * k + 2 + 1 := by linarith
+        _ = (2 * k ^ 2 + 2) + (4 * k + 1) := by linarith
+        _ ≥ (2 * k ^ 2 + 2) + 0 := by linarith
+        _ = 2 * k ^ 2 + 2 := by rw [add_zero]
+        _ ≥ (2 * k ^ 2 + 1) + 1 := by linarith
+        _ ≥ k + 1 := by rel [ih]
+  done
+
 theorem Exercise_6_3_13b (k : Nat) : ∀ n ≥ 2 * k ^ 2,
-    fact n ≥ k ^ n := sorry
+    fact n ≥ k ^ n := by
+  by_induc
+  · -- Base case: just apply Exercise_6_3_13a
+    have h1 : fact (k ^ 2 + k ^ 2) ≥ k ^ (2 * k ^ 2) := Exercise_6_3_13a k (k ^ 2)
+    have h2 : k ^ 2 + k ^ 2 = 2 * k ^ 2 := by linarith
+    rw [h2] at h1
+    exact h1
+  · -- Induction step
+    fix n : ℕ
+    assume h1 : n ≥ 2 * k ^ 2
+    have h2 : n + 1 ≥ k := by
+      have h3 : n + 1 ≥ 2 * k ^ 2 + 1 := by linarith
+      have h4 : 2 * k ^ 2 + 1 ≥ k := for_Exercise_6_3_13b k
+      linarith
+    assume ih : fact n ≥ k ^ n
+    show fact (n + 1) ≥ k ^ (n + 1) from
+      calc fact (n + 1)
+        _ = (n + 1) * fact n := by rfl
+        _ ≥ (n + 1) * k ^ n := by rel [ih]
+        _ ≥ k * k ^ n := by rel [h2]
+        _ = k ^ 1 * k ^ n := by linarith
+        _ = k ^ (1 + n) := (power_law_nat k 1 n).symm
+        _ = k ^ (n + 1) := by rw [add_comm n 1]
+  done
 
 -- 6.
 def seq_6_3_15 (k : Nat) : Int :=
@@ -450,7 +548,26 @@ def seq_6_3_15 (k : Nat) : Int :=
       | n + 1 => 2 * seq_6_3_15 n + n
 
 theorem Exercise_6_3_15 : ∀ (n : Nat),
-    seq_6_3_15 n = 2 ^ n - n - 1 := sorry
+    seq_6_3_15 n = 2 ^ n - n - 1 := by
+  by_induc
+  · rw [Nat.cast_zero]
+    have h1 : seq_6_3_15 0 = 0 := by rfl
+    rw [h1]
+    linarith
+  · fix n : ℕ
+    assume ih : seq_6_3_15 n = 2 ^ n - n - 1
+    have h1 : 2 * 2 ^ n = 2 ^ (n + 1) := by calc 2 * 2 ^ n
+      _ = 2 ^ 1 * 2 ^ n := by rfl
+      _ = 2 ^ (1 + n) := (power_law_nat 2 1 n).symm
+      _ = 2 ^ (n + 1) := by rw [add_comm 1 n]
+    rw [Nat.cast_succ]
+    show seq_6_3_15 (n + 1) = 2 ^ (n + 1) - (n + 1) - 1 from
+      calc seq_6_3_15 (n + 1)
+        _ = 2 * seq_6_3_15 n + n := by rfl
+        _ = 2 * (2 ^ n - n - 1) + n := by rw [ih]
+        _ = 2 * 2 ^ n - (n + 1) - 1 := by linarith
+        _ = 2 ^ (n + 1) - (n + 1) - 1 := by linarith
+  done
 
 -- 7.
 def seq_6_3_16 (k : Nat) : Nat :=
@@ -459,7 +576,25 @@ def seq_6_3_16 (k : Nat) : Nat :=
       | n + 1 => (seq_6_3_16 n) ^ 2
 
 theorem Exercise_6_3_16 : ∀ (n : Nat),
-    seq_6_3_16 n = ___ := sorry
+    seq_6_3_16 n = 2 ^ (2 ^ n) := by
+  by_induc
+  · have h1 : seq_6_3_16 0 = 2 := by rfl
+    rw [h1]
+    rw [pow_zero, pow_one]
+  · fix n : ℕ
+    assume ih : seq_6_3_16 n = 2 ^ 2 ^ n
+    have h1 : 2 * 2 ^ n = 2 ^ (n + 1) := by calc 2 * 2 ^ n
+      _ = 2 ^ 1 * 2 ^ n := by rfl
+      _ = 2 ^ (1 + n) := (power_law_nat 2 1 n).symm
+      _ = 2 ^ (n + 1) := by rw [add_comm 1 n]
+    show seq_6_3_16 (n + 1) = 2 ^ 2 ^ (n + 1) from
+      calc seq_6_3_16 (n + 1)
+        _ = (seq_6_3_16 n) ^ 2 := by rfl
+        _ = (2 ^ 2 ^ n) ^ 2 := by rw [ih]
+        _ = 2 ^ (2 * 2 ^ n) := by
+          rw [← pow_mul 2 (2 ^ n) 2, mul_comm (2 ^ n) 2]
+        _ = 2 ^ (2 ^ (n + 1)) := by rw [h1]
+  done
 
 /- Section 6.4 -/
 -- 1.

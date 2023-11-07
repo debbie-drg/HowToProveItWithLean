@@ -454,3 +454,195 @@ theorem Exercise_6_2_2 {A : Type} (R : BinRel A) (h : partial_order R) :
         · left; exact extendPO_extends T' b x y h10
         · right; exact extendPO_extends T' b y x h10
   done
+
+
+-- Section 6.3. Recursion
+
+/-
+Similarly to how we can use induction to prove a property for all natural
+numbers, recursion let us define a function for all natural numbers.
+Essentially, we specify the value of `f 0` and a way to determine the
+value of `f (n + 1)` if we know `f n`. We can do so with match expressions.
+-/
+
+-- Factorial function
+def fact (k : Nat) : Nat :=
+  match k with
+    | 0 => 1
+    | n + 1 => (n + 1) * fact n
+
+#eval fact 4 -- 24
+
+/-
+This is a recursive definition. When proving results about one such function,
+it is quite common to use induction.
+-/
+
+theorem Example_6_3_1 : ∀ n ≥ 4, fact n > 2 ^ n := by
+  by_induc
+  · -- Base case
+    norm_num
+  · -- Induction step
+    fix n : ℕ
+    assume h1 : n ≥ 4
+    have h2 : n + 1 > 0 := by linarith
+    have h3 : 2 > 0 := by linarith
+    have h4 : 2 ^ n > 0 := Nat.pos_pow_of_pos n h3
+    have h5 : n + 1 > 2 := by linarith
+    assume ih : fact n > 2 ^ n
+    show fact (n + 1) > 2 ^ (n + 1) from
+      calc fact (n + 1)
+        _ = (n + 1) * fact n := by rfl
+        _ > (n + 1) * 2 ^ n := Nat.mul_lt_mul_of_pos_left ih h2
+        _ > 2 * 2 ^ n := Nat.mul_lt_mul_of_pos_right h5 h4
+        _ = 2 ^ (n + 1) := by ring
+  done
+
+/-
+This, however, can be made simpler. If `h` is a proof of a statement asserting
+a relation between two tactics, `rel [h]` will attempt to prove any statement
+obtained from that relationship by applying the same operation to both
+sides. Note that this does not always succeed.
+-/
+
+theorem Example_6_3_1₁ : ∀ n ≥ 4, fact n > 2 ^ n := by
+  by_induc
+  · -- Base case
+    norm_num
+  · -- Induction step
+    fix n : ℕ
+    assume h1 : n ≥ 4
+    assume ih : fact n > 2 ^ n
+    have h2 : n + 1 > 2 := by linarith
+    show fact (n + 1) > 2 ^ (n + 1) from
+      calc fact (n + 1)
+        _ = (n + 1) * fact n := by rfl
+        _ > (n + 1) * 2 ^ n := by rel [ih]
+        _ > 2 * 2 ^ n := by rel [h2]
+        _ = 2 ^ (n + 1) := by ring
+  done
+
+/-
+We now prove one of the lays of exponents: `a ^ (m + n) = a ^ m * a ^ n`.
+Lean's definition is recursive, and uses different definitiosn depending on
+the type of the base.
+-/
+
+--For natural numbers b and k, b ^ k = nat_pow b k:
+def nat_pow (b k : Nat) : Nat :=
+  match k with
+    | 0 => 1
+    | n + 1 => (nat_pow b n) * b
+
+--For a real number b and a natural number k, b ^ k = real_pow b k:
+def real_pow (b : Real) (k : Nat) : Real :=
+  match k with
+    | 0 => 1
+    | n + 1 => b * (real_pow b n)
+
+/-
+Now note that the `ring` tactic can easilly solve our goal.
+-/
+
+theorem Example_6_3_2_cheating : ∀ (a : Real) (m n : Nat),
+    a ^ (m + n) = a ^ m * a ^ n := by
+  fix a : Real; fix m : Nat; fix n : Nat
+  ring
+  done
+
+/-
+However, to illustrate, let us do it using induction.
+-/
+
+theorem Example_6_3_2 : ∀ (a : Real) (m n : Nat),
+    a ^ (m + n) = a ^ m * a ^ n := by
+  fix a : ℝ; fix m : ℕ
+  by_induc
+  · -- Base case
+    show a ^ (m + 0) = a ^ m * a ^ 0 from
+      calc a ^ (m + 0)
+        _ = a ^ m := by rfl
+        _ = a ^ m * 1 := (mul_one (a ^ m)).symm
+        _ = a ^ m * a ^ 0 := by rfl
+  · -- Induction step
+    fix n : ℕ
+    assume ih : a ^ (m + n) = a ^ m * a ^ n
+    show a ^ (m + (n + 1)) = a ^ m * a ^ (n + 1) from
+      calc a ^ (m + (n + 1))
+        _ = a ^ ((m + n) + 1) := by rw [add_assoc]
+        _ = a * a ^ (m + n) := by rfl
+        _ = a * (a ^ m * a ^ n) := by rw [ih]
+        _ = a ^ m * (a * a ^ n) := by
+          rw [← mul_assoc, mul_comm a, mul_assoc]
+        _ = a ^ m * (a ^ (n + 1)) := by rfl
+  done
+
+/-
+Let us prove one more theorem.
+
+Now note that, quite often, Lean will coerce natural numbers to real
+numbers in order to perform operations between naturals and reals. For
+example, we can see notation such as `↑0`, denoting that `0` is coerced.
+However, this should be equal to the real `0`, We have a result to do
+that, called `Nat.cast_zero`.
+
+Similarly, `Nat.cast_succ` proves that `↑(n + 1) = ↑n + 1`.
+-/
+
+theorem Example_6_3_4 : ∀ (x : Real), x > -1 →
+    ∀ (n : Nat), (1 + x) ^ n ≥ 1 + n * x := by
+  fix x : Real
+  assume h1 : x > -1
+  by_induc
+  · -- Base case
+    rw [Nat.cast_zero]
+    linarith
+  · -- Induction step
+    fix n : ℕ
+    assume ih : (1 + x) ^ n ≥ 1 + n * x
+    have h2 : 0 ≤ 1 + x := by linarith -- Otherwise `rel [ih]` fails.
+    have h3 : x ^ 2 ≥ 0 := sq_nonneg x
+    have h4 : n * x ^ 2 ≥ 0 :=
+      calc n * x ^ 2
+        _ ≥ n * 0 := by rel [h3]
+        _ = 0 := by ring
+    rw [Nat.cast_succ]
+    show (1 + x) ^ (n + 1) ≥ 1 + (n + 1) * x from
+      calc (1 + x) ^ (n + 1)
+        _ = (1 + x) * (1 + x) ^ n := by rfl
+        _ ≥ (1 + x) * (1 + n * x) := by rel [ih]
+        _ ≥ 1 + x + n * x + 0 := by linarith
+        _ = 1 + (n + 1) * x := by ring
+  done
+
+/-
+Note that `h2`, `h3`, and `h4` were added as needed when performing the
+`calc` step.
+-/
+
+/-
+Finally, let us briefly mention how `Sum i from k to n, f i` is defined.
+The key is a function called `sum_seq`, defined by recursion.
+-/
+
+def sum_seq₁ {A : Type} [AddZeroClass A]
+    (m k : Nat) (f : Nat → A) : A :=
+  match m with
+    | 0 => 0
+    | n + 1 => sum_seq n k f + f (k + n)
+
+/-
+To ge an idea, we can evaluate `sum_seq 3 k f`.
+
+sum_seq 3 k f = sum_seq 2 k f + f (k + 2)
+              = sum_seq 1 k f + f (k + 1) + f (k + 2)
+              = sum_seq 0 k f + f (k + 0) + f (k + 1) + f (k + 2)
+              = 0 + f (k + 0) + f (k + 1) + f (k + 2)
+              = f k + f (k + 1) + f (k + 2).
+-/
+
+/-
+So we add three consecutive values of `f`, starting with `f k`. The
+notation `Sum i from k to n, f i` is just defined to be
+`sum_seq (n + 1 - k) k f`.
+-/
