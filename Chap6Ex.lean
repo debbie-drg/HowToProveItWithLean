@@ -1077,10 +1077,62 @@ theorem rep_image_family_step {A : Type}
 lemma rep_image_family_sub_closed {A : Type}
     (F : Set (A → A)) (B D : Set A)
     (h1 : B ⊆ D) (h2 : closed_family F D) :
-    ∀ (n : Nat), rep_image_family F n B ⊆ D := sorry
+    ∀ (n : Nat), rep_image_family F n B ⊆ D := by
+  by_induc
+  · -- Base case
+    rw [rep_image_family_base]
+    exact h1
+  · -- Inductive step
+    fix n : ℕ
+    assume ih : rep_image_family F n B ⊆ D
+    define; fix a : A;
+    assume h3 : a ∈ rep_image_family F (n + 1) B
+    rw [rep_image_family_step] at h3
+    obtain (f : A → A) (h4 : f ∈ F ∧ a ∈ image f (rep_image_family F n B))
+      from h3
+    define at h2
+    have h5 : closed f D := h2 f h4.left
+    have h6 : a ∈ image f (rep_image_family F n B) := h4.right
+    define at h6
+    obtain (b : A) (h7 : b ∈ rep_image_family F n B ∧ f b = a) from h6
+    define at ih
+    have h8 : b ∈ D := ih h7.left
+    rw [← h7.right]
+    exact h5 b h8
+  done
 
 theorem Exercise_6_5_3 {A : Type} (F : Set (A → A)) (B : Set A) :
-    closure_family F B (cumul_image_family F B) := sorry
+    closure_family F B (cumul_image_family F B) := by
+  define
+  apply And.intro
+  · -- Cummulative image of B is closed family
+    define
+    apply And.intro
+    · -- B is in the cummulative image
+      fix b : A; assume h1 : b ∈ B
+      define; apply Exists.intro 0
+      rw [rep_image_family_base]
+      exact h1
+    · -- Cummulative image is closed family
+      define; fix f : A → A; assume h1 : f ∈ F
+      define; fix x : A; assume h2 : x ∈ cumul_image_family F B
+      define at h2
+      obtain (m : ℕ) (h3 : x ∈ rep_image_family F m B) from h2
+      define; apply Exists.intro (m + 1)
+      rw [rep_image_family_step]
+      define; apply Exists.intro f; apply And.intro h1
+      define; apply Exists.intro x; apply And.intro h3; rfl
+  · -- Cummulative image of B is smallest
+    fix D : Set A
+    assume h1 : D ∈ {D : Set A | B ⊆ D ∧ closed_family F D}
+    define at h1
+    define; fix a : A; assume h2 : a ∈ cumul_image_family F B
+    define at h2
+    obtain (m : ℕ) (h3 : a ∈ rep_image_family F m B) from h2
+    have h4 : rep_image_family F m B ⊆ D :=
+      rep_image_family_sub_closed F B D h1.left h1.right m
+    exact h4 h3
+  done
 
 -- 2.
 theorem rep_image2_base {A : Type} (f : A → A → A) (B : Set A) :
@@ -1093,6 +1145,8 @@ theorem rep_image2_step {A : Type}
 --You won't be able to complete this proof
 theorem Exercise_6_5_6 {A : Type} (f : A → A → A) (B : Set A) :
     closed2 f (cumul_image2 f B) := sorry
+-- The error in the argument is assuming that the integer for which
+-- points are in the repeated image is the same for both points.
 
 -- 3.
 theorem rep_un_image2_base {A : Type} (f : A → A → A) (B : Set A) :
@@ -1105,20 +1159,92 @@ theorem rep_un_image2_step {A : Type}
 
 theorem Exercise_6_5_8a {A : Type} (f : A → A → A) (B : Set A) :
     ∀ (m n : Nat), m ≤ n →
-    rep_un_image2 f m B ⊆ rep_un_image2 f n B := sorry
+    rep_un_image2 f m B ⊆ rep_un_image2 f n B := by
+  fix m : ℕ
+  by_induc
+  · -- Base case: n = m
+    rfl
+  · -- Inductive step
+    fix n : ℕ
+    assume h1 : m ≤ n
+    assume ih : rep_un_image2 f m B ⊆ rep_un_image2 f n B
+    define; fix a : A; assume h2 : a ∈ rep_un_image2 f m B
+    rw [rep_un_image2_step]
+    define
+    left
+    exact ih h2
+  done
 
 lemma rep_un_image2_sub_closed {A : Type} {f : A → A → A} {B D : Set A}
     (h1 : B ⊆ D) (h2 : closed2 f D) :
-    ∀ (n : Nat), rep_un_image2 f n B ⊆ D := sorry
+    ∀ (n : Nat), rep_un_image2 f n B ⊆ D := by
+  by_induc
+  · -- Base case
+    rw [rep_un_image2_base]
+    exact h1
+  · fix n : ℕ
+    assume ih : rep_un_image2 f n B ⊆ D
+    rw [rep_un_image2_step]
+    define; fix a; assume h3 : a ∈ un_image2 f (rep_un_image2 f n B)
+    define at h3
+    by_cases on h3
+    · exact ih h3
+    · define at h3
+      obtain (x : A) (h4 : ∃ (y : A), x ∈ rep_un_image2 f n B
+        ∧ y ∈ rep_un_image2 f n B ∧ a = f x y) from h3
+      obtain (y : A) (h5 : x ∈ rep_un_image2 f n B
+        ∧ y ∈ rep_un_image2 f n B ∧ a = f x y) from h4
+      define at h2
+      have h6 : x ∈ D := ih h5.left
+      have h7 : y ∈ D := ih h5.right.left
+      have h8 : f x y ∈ D := h2 x h6 y h7
+      rw [h5.right.right]
+      exact h8
+  done
 
 lemma closed_lemma
     {A : Type} {f : A → A → A} {B : Set A} {x y : A} {nx ny n : Nat}
     (h1 : x ∈ rep_un_image2 f nx B) (h2 : y ∈ rep_un_image2 f ny B)
     (h3 : nx ≤ n) (h4 : ny ≤ n) :
-    f x y ∈ cumul_un_image2 f B := sorry
+    f x y ∈ cumul_un_image2 f B := by
+  define
+  apply Exists.intro (n + 1)
+  rw [rep_un_image2_step]
+  define; right; define
+  apply Exists.intro x; apply Exists.intro y
+  apply And.intro
+  · exact Exercise_6_5_8a f B nx n h3 h1
+  · apply And.intro
+    · exact Exercise_6_5_8a f B ny n h4 h2
+    · rfl
+  done
 
 theorem Exercise_6_5_8b {A : Type} (f : A → A → A) (B : Set A) :
-    closure2 f B (cumul_un_image2 f B) := sorry
+    closure2 f B (cumul_un_image2 f B) := by
+  define
+  apply And.intro
+  · define
+    apply And.intro
+    · fix b; assume h1 : b ∈ B
+      define; apply Exists.intro 0; rw [rep_un_image2_base]; exact h1
+    · define
+      fix x : A; assume h1 : x ∈ cumul_un_image2 f B
+      fix y : A; assume h2 : y ∈ cumul_un_image2 f B
+      define at h1
+      obtain (nx : ℕ) (hx : x ∈ rep_un_image2 f nx B) from h1
+      obtain (ny : ℕ) (hy : y ∈ rep_un_image2 f ny B) from h2
+      set n : ℕ := nx + ny
+      have h3 : nx ≤ n := by linarith
+      have h4 : ny ≤ n := by linarith
+      exact closed_lemma hx hy h3 h4
+  · fix D : Set A
+    assume h1 : D ∈ {D : Set A | B ⊆ D ∧ closed2 f D}
+    define; fix a : A; assume h2 : a ∈ cumul_un_image2 f B
+    define at h2
+    obtain (m : ℕ) (h3 : a ∈ rep_un_image2 f m B) from h2
+    define at h1
+    exact rep_un_image2_sub_closed h1.left h1.right m h3
+  done
 
 -- Definitions for next four exercises
 def idExt (A : Type) : Set (A × A) := { (x, y) : A × A | x = y }
@@ -1130,21 +1256,154 @@ def rep_comp {A : Type} (R : Set (A × A)) (n : Nat) : Set (A × A) :=
 
 def cumul_comp {A : Type} (R : Set (A × A)) : Set (A × A) :=
   { (x, y) : A × A | ∃ n ≥ 1, (x, y) ∈ rep_comp R n }
+
+-- Definitions for steps like in other exercises
+def rep_comp_base {A : Type} (R : Set (A × A)) :
+    rep_comp R 0 = idExt A := by rfl
+
+theorem rep_comp_step {A : Type} (R : Set (A × A)) (n : Nat) :
+    rep_comp R (n + 1) = comp (rep_comp R n) R := by rfl
+
 -- 4.
 theorem rep_comp_one {A : Type} (R : Set (A × A)) :
-    rep_comp R 1 = R := sorry
+    rep_comp R 1 = R := by
+  have h1 : rep_comp R 1 = comp (rep_comp R 0) R := by rfl
+  rw [rep_comp_base] at h1
+  rw [h1]
+  apply Set.ext; fix (x, y) : A × A
+  apply Iff.intro
+  · assume h2 : (x, y) ∈ comp (idExt A) R
+    define at h2
+    obtain (xy : A) (h3 : (x, xy) ∈ R ∧ (xy, y) ∈ idExt A) from h2
+    have h4 : xy = y := by
+      have h : (xy, y) ∈ idExt A := h3.right
+      define at h; exact h
+    rw [h4] at h3
+    exact h3.left
+  · assume h2 : (x, y) ∈ R
+    define; apply Exists.intro y
+    apply And.intro h2
+    rfl
+  done
 
 -- 5.
 theorem Exercise_6_5_11 {A : Type} (R : Set (A × A)) :
     ∀ (m n : Nat), rep_comp R (m + n) =
-    comp (rep_comp R m) (rep_comp R n) := sorry
+    comp (rep_comp R m) (rep_comp R n) := by
+  fix m : ℕ
+  by_induc
+  · -- Base case
+    · apply Set.ext
+      fix (x, y) : A × A
+      apply Iff.intro
+      · assume h : (x, y) ∈ rep_comp R (m + 0)
+        rw [add_zero] at h
+        rw [rep_comp_base]
+        define; apply Exists.intro x
+        apply And.intro
+        · rfl
+        · exact h
+      · assume h1 : (x, y) ∈ comp (rep_comp R m) (rep_comp R 0)
+        rw [rep_comp_base] at h1
+        define at h1
+        obtain (x' : A)
+          (h2 : (x, x') ∈ idExt A ∧ (x', y) ∈ rep_comp R m) from h1
+        have h3 : x = x' := h2.left
+        rw [← h3] at h2
+        exact h2.right
+  · -- Induction step
+    fix n : ℕ
+    assume ih : rep_comp R (m + n) = comp (rep_comp R m) (rep_comp R n)
+    rw [← add_assoc, rep_comp_step]
+    apply Set.ext
+    fix (x, y) : A × A
+    apply Iff.intro
+    · assume h1 : (x, y) ∈ comp (rep_comp R (m + n)) R
+      define at h1
+      obtain (z : A) (
+        h2 : (x, z) ∈ R ∧ (z, y) ∈ rep_comp R (m + n)) from h1
+      rw [ih] at h2
+      have h3 : (z, y) ∈ comp (rep_comp R m) (rep_comp R n) := h2.right
+      define at h3
+      obtain (z' : A)
+        (h4 : (z, z') ∈ rep_comp R n ∧ (z', y) ∈ rep_comp R m) from h3
+      define
+      apply Exists.intro z'
+      apply And.intro
+      · define
+        apply Exists.intro z
+        exact And.intro h2.left h4.left
+      · exact h4.right
+    · assume h1 : (x, y) ∈ comp (rep_comp R m) (comp (rep_comp R n) R)
+      define at h1
+      obtain (z : A)
+        (h2 : (x, z) ∈ comp (rep_comp R n) R ∧ (z, y) ∈ rep_comp R m) from h1
+      have h3 : (x, z) ∈ comp (rep_comp R n) R := h2.left
+      define at h3
+      obtain (z' : A) (h4 : (x, z') ∈ R ∧ (z', z) ∈ rep_comp R n) from h3
+      define; rw [ih]
+      apply Exists.intro z'
+      apply And.intro h4.left
+      define
+      apply Exists.intro z
+      exact And.intro h4.right h2.right
+  done
 
 -- 6.
 lemma rep_comp_sub_trans {A : Type} {R S : Set (A × A)}
     (h1 : R ⊆ S) (h2 : transitive (RelFromExt S)) :
-    ∀ n ≥ 1, rep_comp R n ⊆ S := sorry
+    ∀ n ≥ 1, rep_comp R n ⊆ S := by
+  by_induc
+  · rw [rep_comp_one]
+    exact h1
+  · fix n : ℕ
+    assume h3 : n ≥ 1
+    assume ih : rep_comp R n ⊆ S
+    rw [rep_comp_step]
+    define; fix (x, y) : A × A
+    assume h4 : (x, y) ∈ comp (rep_comp R n) R
+    define at h4
+    obtain (z : A) (h5 : (x, z) ∈ R ∧ (z, y) ∈ rep_comp R n) from h4
+    have h6 : (z, y) ∈ S := ih h5.right
+    have h7 : (x, z) ∈ S := h1 h5.left
+    exact h2 x z y h7 h6
+  done
 
 -- 7.
 theorem Exercise_6_5_14 {A : Type} (R : Set (A × A)) :
     smallestElt (sub (A × A)) (cumul_comp R)
-    { S : Set (A × A) | R ⊆ S ∧ transitive (RelFromExt S) } := sorry
+    { S : Set (A × A) | R ⊆ S ∧ transitive (RelFromExt S) } := by
+  define
+  apply And.intro
+  · define
+    apply And.intro
+    · define; fix (x, y) : A × A
+      assume h1 : (x, y) ∈ R
+      define; apply Exists.intro 1
+      rw [rep_comp_one]
+      apply And.intro
+      · linarith
+      · exact h1
+    · define
+      fix x : A; fix y : A; fix z : A
+      assume h1 : RelFromExt (cumul_comp R) x y
+      assume h2 : RelFromExt (cumul_comp R) y z
+      define at h1
+      define at h2
+      obtain (n1 : ℕ) (h3 : n1 ≥ 1 ∧ (x, y) ∈ rep_comp R n1) from h1
+      obtain (n2 : ℕ) (h4 : n2 ≥ 1 ∧ (y, z) ∈ rep_comp R n2) from h2
+      define; apply Exists.intro (n2 + n1)
+      apply And.intro
+      · linarith
+      · rw [Exercise_6_5_11]
+        define; apply Exists.intro y
+        exact And.intro h3.right h4.right
+  · fix D : Set (A × A)
+    assume h1 : D ∈ {S : Set (A × A) | R ⊆ S ∧ transitive (RelFromExt S)}
+    define at h1
+    define; fix (x, y); assume h2 : (x, y) ∈ cumul_comp R
+    define at h2
+    obtain (m : ℕ) (h3 : m ≥ 1 ∧ (x, y) ∈ rep_comp R m) from h2
+    have h4 : rep_comp R m ⊆ D := rep_comp_sub_trans h1.left h1.right m h3.left
+    exact h4 h3.right
+  done

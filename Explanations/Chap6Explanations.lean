@@ -903,3 +903,100 @@ theorem Theorem_6_4_5 :
   contradict q'ne0
   linarith
   done
+
+
+-- Section 6.5. Closures again
+
+/-
+Recall that if `f : A → A` and `B : Set A`, the closure of `B` is the
+smallest set containing `B` that is closed under `f`. Thus, the image
+of any point in the closure is again in the closure. In Section 5.4
+we constructed it as the intersection of every closed set containing `B`.
+Induction provides us wqith another way of obtaining this set:
+repeatedly taking the image. Let us define that by recursion.
+-/
+
+def rep_image {A : Type} (f : A → A) (n : Nat) (B : Set A) : Set A :=
+  match n with
+    | 0 => B
+    | k + 1 => image f (rep_image f k B)
+
+/-
+`rep_image f n B` is the result of starting with `B` and taking the image
+under `f` a total of `n` times. The following two results are immediate.
+-/
+
+theorem rep_image_base {A : Type} (f : A → A) (B : Set A) :
+    rep_image f 0 B = B := by rfl
+
+theorem rep_image_step {A : Type} (f : A → A) (n : Nat) (B : Set A) :
+    rep_image f (n + 1) B = image f (rep_image f n B) := by rfl
+
+/-
+We show that the closure can also be obtained as the union of all of these
+images, which we call the cumulative image of `B` under `f`.
+-/
+
+def cumul_image {A : Type} (f : A → A) (B : Set A) : Set A :=
+  { x : A | ∃ (n : Nat), x ∈ rep_image f n B }
+
+/-
+To prove that the cumulative image is the closure of `B` under `f`, we
+first prove a lemma stating that if `B ⊆ D` and `D` is closed under `f`,
+then for every `n`, `rep_image f n B ⊆ D`.
+-/
+
+lemma rep_image_sub_closed {A : Type} {f : A → A} {B D : Set A}
+    (h1 : B ⊆ D) (h2 : closed f D) :
+    ∀ (n : Nat), rep_image f n B ⊆ D := by
+  by_induc
+  · -- Base case
+    rw [rep_image_base]
+    exact h1
+  · -- Induction step
+    fix n : ℕ
+    assume ih : rep_image f n B ⊆ D
+    fix x : A; assume h3 : x ∈ rep_image f (n + 1) B
+    rw [rep_image_step] at h3
+    define at h3
+    obtain (b : A) (h4 : b ∈ rep_image f n B ∧ f b = x) from h3
+    rw [← h4.right]
+    have h5 : b ∈ D := ih h4.left
+    exact h2 b h5
+  done
+
+/-
+And now we prove the result.
+-/
+
+theorem Theorem_6_5_1 {A : Type} (f : A → A) (B : Set A) :
+    closure f B (cumul_image f B) := by
+  define
+  apply And.intro
+  · -- cumul_image f B
+    define
+    apply And.intro
+    · fix x : A; assume h1 : x ∈ B
+      define; apply Exists.intro 0
+      rw [rep_image_base]
+      exact h1
+    · define
+      fix x : A; assume h1 : x ∈ cumul_image f B
+      define at h1
+      obtain (m : ℕ) (h2 : x ∈ rep_image f m B) from h1
+      define; apply Exists.intro (m + 1)
+      rw [rep_image_step]
+      define; apply Exists.intro x
+      apply And.intro h2
+      rfl
+  · -- cumul_image f B is the smallest
+    fix D : Set A
+    assume h1 : D ∈ {D : Set A | B ⊆ D ∧ closed f D}
+    define at h1
+    define; fix a : A; assume h2 : a ∈ cumul_image f B
+    define at h2
+    obtain (m : ℕ) (h3 : a ∈ rep_image f m B) from h2
+    have h4 : rep_image f m B ⊆ D :=
+      rep_image_sub_closed h1.left h1.right m
+    exact h4 h3
+  done
