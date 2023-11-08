@@ -836,8 +836,6 @@ theorem Exercise_6_4_8a : ∀ (m n : Nat),
             calc Fib (m + n + 1)
               _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)
                 + (Fib m * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2)) := h8
-              _ = Fib m * Fib n' + Fib (m + 1) * Fib (n' + 1)
-                + Fib m * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2) := by ring_nf
               _ = (Fib m * Fib n' + Fib m * Fib (n' + 1))
                 + (Fib (m + 1) * Fib (n' + 1) + Fib (m + 1) * Fib (n' + 2)) := by ring_nf
               _ =  Fib m * (Fib n' + Fib (n' + 1)) + Fib (m + 1) * (Fib (n' + 1) + Fib (n' + 2)) := by ring_nf
@@ -980,15 +978,55 @@ theorem triple_rec_formula :
 
 -- 10.
 lemma quot_rem_unique_lemma {m q r q' r' : Nat}
-    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := sorry
+    (h1 : m * q + r = m * q' + r') (h2 : r' < m) : q ≤ q' := by
+  have h3 : m > 0 := by linarith
+  by_contra h4
+  have h5 : q > q' := by linarith
+  have h6 : m * q + r < m * q + m := by
+    calc m * q + r
+      _ = m * q' + r' := h1
+      _ < m * q + m := by rel [h5, h2]
+  have h7 : r < m := by linarith
+  have h8 : m * q ≥ m * q' := by rel [h5]
+  have h9 : m * q - m * q' + m * q' = m * q := Nat.sub_add_cancel h8
+  rw [← h9] at h1
+  have h10 : r' = m * q - m * q' + r := by linarith
+  have h11 : m * q - m * q' < m := by linarith
+  have h12 : m * (q - q') = m * q - m * q' := Nat.mul_sub_left_distrib m q q'
+  rw [← h12] at h11
+  have h13 : q - q' = 0 := by
+    contradict h11 with h13
+    rw [Nat.not_lt_eq]
+    obtain (n : ℕ) (h14 : q - q' = n + 1) from nonzero_is_successor (q - q') h13
+    rw [h14]
+    have h15 : 1 ≤ n + 1 := by linarith
+    have h16 : m * 1 ≤ m * (n + 1) := Nat.mul_le_mul_left m h15
+    rw [mul_one] at h16
+    exact h16
+  have h14 : ¬q - q' = 0 := Nat.sub_ne_zero_of_lt h5
+  show False from h14 h13
 
 theorem quot_rem_unique (m q r q' r' : Nat)
     (h1 : m * q + r = m * q' + r') (h2 : r < m) (h3 : r' < m) :
-    q = q' ∧ r = r' := sorry
+    q = q' ∧ r = r' := by
+  have h4 : q' ≤ q := quot_rem_unique_lemma h1.symm h2
+  have h5 : q ≤ q' := quot_rem_unique_lemma h1 h3
+  have h6 : q = q' := by linarith
+  apply And.intro h6
+  rw [h6] at h1
+  exact Nat.add_left_cancel h1
 
 -- 11.
 theorem div_mod_char (m n q r : Nat)
-    (h1 : n = m * q + r) (h2 : r < m) : q = n / m ∧ r = n % m := sorry
+    (h1 : n = m * q + r) (h2 : r < m) : q = n / m ∧ r = n % m := by
+  have h3 : n = m * (n / m) + n % m := (Nat.div_add_mod n m).symm
+  have h4 : m > 0 := by linarith
+  have h5 : n % m < m := Nat.mod_lt n h4
+  have h6 : m * q + r = m * (n / m) + n % m := by
+    calc m * q + r
+      _ = n := by rw [h1]
+      _ = m * (n / m) + n % m := by rw [← h3]
+  exact quot_rem_unique m q r (n / m) (n % m) h6 h2 h5
 
 /- Section 6.5 -/
 -- Definitions for next three exercises
