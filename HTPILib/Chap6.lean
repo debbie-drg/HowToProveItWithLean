@@ -238,7 +238,7 @@ lemma extendPO_is_antisymm {A : Type} (R : BinRel A) (b : A)
     (h : partial_order R) : antisymmetric (extendPO R b) := sorry
 
 lemma extendPO_is_po {A : Type} (R : BinRel A) (b : A)
-    (h : partial_order R) : partial_order (extendPO R b) := 
+    (h : partial_order R) : partial_order (extendPO R b) :=
   And.intro (extendPO_is_ref R b h)
     (And.intro (extendPO_is_trans R b h) (extendPO_is_antisymm R b h))
 
@@ -599,7 +599,7 @@ lemma rep_image_sub_closed {A : Type} {f : A → A} {B D : Set A}
     rewrite [rep_image_step] at h3
     define at h3    --h3 : ∃ (x_1 : A), x_1 ∈ rep_image f n B ∧ f x_1 = x
     obtain (b : A) (h4 : b ∈ rep_image f n B ∧ f b = x) from h3
-    rewrite [←h4.right]   --Goal : f b ∈ D    
+    rewrite [←h4.right]   --Goal : f b ∈ D
     have h5 : b ∈ D := ih h4.left
     define at h2          --h2 : ∀ (x : A), x ∈ D → f x ∈ D
     show f b ∈ D from h2 b h5

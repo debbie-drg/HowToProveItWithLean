@@ -4,41 +4,251 @@ namespace HTPI.Exercises
 /- Section 7.1 -/
 -- 1.
 theorem dvd_a_of_dvd_b_mod {a b d : Nat}
-    (h1 : d ∣ b) (h2 : d ∣ (a % b)) : d ∣ a := sorry
+    (h1 : d ∣ b) (h2 : d ∣ (a % b)) : d ∣ a := by
+  set q : Nat := a / b
+  have h3 : b * q + a % b = a := Nat.div_add_mod a b
+  define at h1; obtain (j : ℕ) (h4 : b = d * j) from h1
+  define at h2; obtain (k : ℕ) (h5 : a % b = d * k) from h2
+  define; apply Exists.intro (j * q + k)
+  show a = d * (j * q + k) from
+    calc a
+      _ = b * q + a % b := h3.symm
+      _ = (d * j) * q + a % b := by rw [h4]
+      _ = (d * j) * q + d * k := by rw [h5]
+      _ = d * (j * q + k) := by ring_nf
+  done
 
 -- 2.
-lemma gcd_comm_lt {a b : Nat} (h : a < b) : gcd a b = gcd b a := sorry
+lemma gcd_comm_lt {a b : Nat} (h : a < b) : gcd a b = gcd b a := by
+  have h1 : b ≠ 0 := by linarith
+  have h2 : a % b = a := Nat.mod_eq_of_lt h
+  rw [gcd_nonzero a h1, h2]
+  done
 
-theorem gcd_comm (a b : Nat) : gcd a b = gcd b a := sorry
+theorem gcd_comm (a b : Nat) : gcd a b = gcd b a := by
+  by_cases h1 : a < b
+  · exact gcd_comm_lt h1
+  · by_cases h2 : b = a
+    · rw [h2]
+    · have h3 : a ≥ b := Nat.ge_of_not_lt h1
+      have h4 : a > b := lt_of_le_of_ne h3 h2
+      have h5 : b < a := gt_iff_lt.mp h4
+      have h6 : gcd b a = gcd a b := gcd_comm_lt h5
+      exact h6.symm
+  done
 
 -- 3.
 theorem Exercise_7_1_5 (a b : Nat) (n : Int) :
-    (∃ (s t : Int), s * a + t * b = n) ↔ (↑(gcd a b) : Int) ∣ n := sorry
+    (∃ (s t : Int), s * a + t * b = n) ↔ (↑(gcd a b) : Int) ∣ n := by
+  apply Iff.intro
+  · -- →
+    assume h1 : ∃ (s : ℤ), ∃ (t : ℤ), s * ↑a + t * ↑b = n
+    obtain (s : ℤ) (h2 : ∃ (t : ℤ), s * ↑a + t * ↑b = n) from h1
+    obtain (t : ℤ) (h3 : s * ↑a + t * ↑b = n) from h2
+    have h4 : (gcd a b) ∣ a := gcd_dvd_left a b
+    have h5 : (gcd a b) ∣ b := gcd_dvd_right a b
+    define at h4; obtain (c : ℕ) (h6 : a = gcd a b * c) from h4
+    define at h5; obtain (d : ℕ) (h7 : b = gcd a b * d) from h5
+    have h8 : n = s * ↑(gcd a b * c) + t * ↑(gcd a b * d) := by
+      calc n
+        _ = s * ↑a + t * ↑b := h3.symm
+        _ = s * ↑(gcd a b * c) + t * ↑b := by rw [← h6]
+        _ = s * ↑(gcd a b * c) + t * ↑(gcd a b * d) := by rw [← h7]
+    rw [Nat.cast_mul, Nat.cast_mul] at h8
+    define
+    apply Exists.intro (s * ↑c + t * ↑d)
+    show n = ↑(gcd a b) * (s * ↑c + t * ↑d) from
+      calc n
+        _ = s * (↑(gcd a b) * ↑c) + t * (↑(gcd a b) * ↑d) := h8
+        _ = ↑(gcd a b) * (s * ↑c) + ↑(gcd a b) * (t * ↑d) := by ring
+        _ = ↑(gcd a b) * (s * ↑c + t * ↑d) := by ring
+  · assume h1 : ↑(gcd a b) ∣ n
+    define at h1
+    obtain (c : ℤ) (h2 : n = ↑(gcd a b) * c) from h1
+    have h3 : (gcd_c1 a b) * ↑a + (gcd_c2 a b) * ↑b = ↑(gcd a b) := gcd_lin_comb b a
+    apply Exists.intro ((gcd_c1 a b) * c)
+    apply Exists.intro ((gcd_c2 a b) * c)
+    rw [h2]
+    show gcd_c1 a b * c * ↑a + gcd_c2 a b * c * ↑b = ↑(gcd a b) * c from
+      calc gcd_c1 a b * c * ↑a + gcd_c2 a b * c * ↑b
+        _ = c * (gcd_c1 a b * ↑a + gcd_c2 a b * ↑b) := by ring
+        _ = c * ↑(gcd a b) := by rw [h3]
+        _ = ↑(gcd a b) * c := by ring
+  done
 
 -- 4.
 theorem Exercise_7_1_6 (a b c : Nat) :
-    gcd a b = gcd (a + b * c) b := sorry
+    gcd a b = gcd (a + b * c) b := by
+  have h1 : gcd a b ∣ gcd (a + b * c) b := by
+    set s : ℤ := gcd_c1 (a + b * c) b
+    set t : ℤ := gcd_c2 (a + b * c) b
+    have h1 : s * ↑(a + b * c) + t * ↑b = ↑(gcd (a + b * c) b)
+      := gcd_lin_comb b (a + b * c)
+    have h2 : s * ↑a + (s * ↑c + t) * ↑b = ↑(gcd (a + b * c) b) := by
+      calc s * ↑a + (s * ↑c + t) * ↑b
+        _ = s * (↑a + ↑b * ↑c) + t * ↑b := by ring
+        _ = s * (↑a + ↑(b * c)) + t * ↑b := by rw [Nat.cast_mul]
+        _ = s * ↑(a + b * c) + t * ↑b := by rw [Nat.cast_add]
+        _ = ↑(gcd (a + b * c) b) := by rw [h1]
+    have h3 : (∃ (s t : Int), s * a + t * b = ↑(gcd (a + b * c) b)) := by
+      apply Exists.intro s; apply Exists.intro (s * ↑c + t); exact h2
+    have h4 : (↑(gcd a b) : Int) ∣ ↑(gcd (a + b * c) b)
+      := (Exercise_7_1_5 a b (↑(gcd (a + b * c) b))).mp h3
+    exact Int.coe_nat_dvd.mp h4
+  have h2 : gcd (a + b * c) b ∣ gcd a b := by
+    set s : ℤ := gcd_c1 a b
+    set t : ℤ := gcd_c2 a b
+    have h2 : s * ↑a + t * ↑b = ↑(gcd a b) := gcd_lin_comb b a
+    have h3 : s * ↑(a + b * c) + (t - s * ↑c) * ↑b = ↑(gcd a b) := by
+      calc s * ↑(a + b * c) + (t - s * ↑c) * ↑b
+        _ = s * (↑a + ↑(b * c)) + (t - s * ↑c) * ↑b := by rw [Nat.cast_add]
+        _ = s * (↑a + ↑b * ↑c) + (t - s * ↑c) * ↑b := by rw [Nat.cast_mul]
+        _ = s * ↑a + t * ↑b := by ring
+        _ = ↑(gcd a b) := by rw [h2]
+    have h4 : (∃ (s t : Int), s * (a + b * c) + t * b = ↑(gcd a b)) := by
+      apply Exists.intro s; apply Exists.intro (t - s * ↑c); exact h3
+    have h5 : (↑(gcd (a + b * c) b) : Int) ∣ ↑(gcd a b)
+      := (Exercise_7_1_5 (a + b * c) b (↑(gcd a b))).mp h4
+    exact Int.coe_nat_dvd.mp h5
+  exact Nat.dvd_antisymm h1 h2
+  done
 
 -- 5.
 theorem gcd_is_nonzero {a b : Nat} (h : a ≠ 0 ∨ b ≠ 0) :
-    gcd a b ≠ 0 := sorry
+    gcd a b ≠ 0 := by
+  by_contra h1
+  have h2 : gcd a b ∣ a := gcd_dvd_left a b
+  rw [h1] at h2
+  have h3 : gcd a b ∣ b := gcd_dvd_right a b
+  rw [h1] at h3
+  have h4 : a = 0 := Nat.eq_zero_of_zero_dvd h2
+  have h5 : b = 0 := Nat.eq_zero_of_zero_dvd h3
+  demorgan at h
+  have h6 : a = 0 ∧ b = 0 := And.intro h4 h5
+  show False from h h6
+  done
 
 -- 6.
 theorem gcd_greatest {a b d : Nat} (h1 : gcd a b ≠ 0)
-    (h2 : d ∣ a) (h3 : d ∣ b) : d ≤ gcd a b := sorry
+    (h2 : d ∣ a) (h3 : d ∣ b) : d ≤ gcd a b := by
+  have h4 : d ∣ gcd a b := Theorem_7_1_6 h2 h3
+  define at h4
+  obtain (c : Nat) (h5 : gcd a b = d * c) from h4
+  by_cases h6 : c = 0
+  · by_contra h7
+    rw [h6, mul_zero] at h5
+    show False from h1 h5
+  · have h7 : c > 0 := Nat.pos_of_ne_zero h6
+    have h8 : c ≥ 1 := by linarith
+    have h9 : 1 * d ≤ c * d := Nat.mul_le_mul_right d h8
+    rw [one_mul, mul_comm c d, ← h5] at h9
+    exact h9
 
 -- 7.
 lemma Lemma_7_1_10a {a b : Nat}
-    (n : Nat) (h : a ∣ b) : (n * a) ∣ (n * b) := sorry
+    (n : Nat) (h : a ∣ b) : (n * a) ∣ (n * b) := by
+  define at h; obtain (c : ℕ) (h1 : b = a * c) from h
+  define; apply Exists.intro c
+  rw [h1, ← mul_assoc]
+  done
 
 lemma Lemma_7_1_10b {a b n : Nat}
-    (h1 : n ≠ 0) (h2 : (n * a) ∣ (n * b)) : a ∣ b := sorry
+    (h1 : n ≠ 0) (h2 : (n * a) ∣ (n * b)) : a ∣ b := by
+  have h' : n > 0 := Nat.pos_of_ne_zero h1
+  define at h2; obtain (c : ℕ) (h3 : n * b = n * a * c) from h2
+  rw [mul_assoc, mul_left_cancel_iff_of_pos h'] at h3
+  define; apply Exists.intro c; exact h3
+  done
 
 lemma Lemma_7_1_10c {a b : Nat}
-    (h1 : a ∣ b) (h2 : b ∣ a) : a = b := sorry
+    (h1 : a ∣ b) (h2 : b ∣ a) : a = b := by
+  define at h1; obtain (c : ℕ) (h3 : b = a * c) from h1
+  define at h2; obtain (d : ℕ) (h4 : a = b * d) from h2
+  by_cases h : a = 0
+  · rw [h, zero_mul] at h3
+    rw [h, h3]
+  · have h' : a > 0 := Nat.pos_of_ne_zero h
+    have h5 : 1 = c * d := by
+      rw [h3, mul_assoc] at h4
+      nth_rewrite 1 [← mul_one a] at h4
+      rw [mul_left_cancel_iff_of_pos h'] at h4
+      exact h4
+    have h6 : c = 1 ∧ d = 1 := mul_eq_one.mp h5.symm
+    rw [h4, h6.right, mul_one]
+    done
+
+lemma mul_left_cancel {n a b : Nat} (h : n ≠ 0) :
+    n * a = n * b → a = b := by
+  assume h' : n * a = n * b
+  by_contra h''
+  have h0 : n > 0 := Nat.pos_of_ne_zero h
+  have h''' : n * a ≠ n * b := (Nat.mul_ne_mul_right h0).mpr h''
+  show False from h''' h'
+  done
 
 theorem Exercise_7_1_10 (a b n : Nat) :
-    gcd (n * a) (n * b) = n * gcd a b := sorry
+    gcd (n * a) (n * b) = n * gcd a b := by
+  by_cases h : n = 0
+  · rw [h, zero_mul, zero_mul, gcd_base, zero_mul]
+  · have h1 : gcd a b ∣ a := gcd_dvd_left a b
+    have h2 : n * gcd a b ∣ n * a := Lemma_7_1_10a n h1
+    have h3 : gcd a b ∣ b := gcd_dvd_right a b
+    have h4 : n * gcd a b ∣ n * b := Lemma_7_1_10a n h3
+    by_cases h5 : gcd a b = 0
+    · have h6 : a = 0 ∧ b = 0 := by
+        by_contra h
+        demorgan at h
+        have h' : gcd a b ≠ 0 := gcd_is_nonzero h
+        show False from h' h5
+      rw [h6.left, h6.right, mul_zero, gcd_base, mul_zero]
+    · have h6 : gcd (n * a) (n * b) ≠ 0 := by
+        by_contra h'
+        have h'' : n * a = 0 ∧ n * b = 0 := by
+          by_contra h''
+          demorgan at h''
+          have h''' : gcd (n * a) (n * b) ≠ 0 :=
+            gcd_is_nonzero h''
+          show False from h''' h'
+        have ha : a = 0 := by
+          have ha' : n * a = 0 := h''.left
+          by_contra ha''
+          have hna : n * a ≠ 0 := Nat.mul_ne_zero h ha''
+          show False from hna ha'
+        rw [ha, gcd_comm, gcd_base] at h5
+        have hnb : n * b ≠ 0 := Nat.mul_ne_zero h h5
+        show False from hnb h''.right
+      have h7 : n * gcd a b ≤ gcd (n * a) (n * b) :=
+        gcd_greatest h6 h2 h4
+      have h8 : n ∣ n * a := by
+        define; apply Exists.intro a; rfl
+      have h9 : n ∣ n * b := by
+        define; apply Exists.intro b; rfl
+      have h10 : n ∣ gcd (n * a) (n * b) :=
+        Theorem_7_1_6 h8 h9
+      define at h10
+      obtain (c : Nat) (h11 : gcd (n * a) (n * b) = n * c) from h10
+      have h12 : c ∣ gcd (n * a) (n * b) := by
+        define; apply Exists.intro n; rw [mul_comm c n]; exact h11
+      obtain (c₁ : Nat) (h13 : gcd (n * a) (n * b) = c * c₁) from h12
+      have h14 : gcd (n * a) (n * b) ∣ n * a := gcd_dvd_left (n * a) (n * b)
+      obtain (ca : Nat) (h15 : n * a = gcd (n * a) (n * b) * ca) from h14
+      have h16 : gcd (n * a) (n * b) ∣ n * b := gcd_dvd_right (n * a) (n * b)
+      obtain (cb : Nat) (h17 : n * b = gcd (n * a) (n * b) * cb) from h16
+      rw [h11] at h15
+      rw [h11] at h17
+      have h18 : c ∣ a := by
+        rw [mul_assoc n c ca] at h15
+        have h18 : a = c * ca := mul_left_cancel h h15
+        define; apply Exists.intro ca; exact h18
+      have h19 : c ∣ b := by
+        rw [mul_assoc n c cb] at h17
+        have h19 : b = c * cb := mul_left_cancel h h17
+        define; apply Exists.intro cb; exact h19
+      have h20 : c ≤ gcd a b := gcd_greatest h5 h18 h19
+      have h21 : n * c ≤ n * gcd a b := Nat.mul_le_mul_left n h20
+      rw [← h11] at h21
+      linarith
+  done
 
 /- Section 7.2 -/
 -- 1.

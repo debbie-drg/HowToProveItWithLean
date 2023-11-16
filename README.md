@@ -20,4 +20,23 @@ In order to run these files:
   ```
 
 * Clone the repository
-* Open the folder for the repository in the terminal and run `lake build`. Keep in mind that this will compile [mathlib4](https://github.com/leanprover-community/mathlib4), a library of mathematical results that span more than the common maths bachelor's degree,  so it will take a while. It is preferred that `lake build` is run on a terminal with VSCode conflicts. Otherwise, VSCode may be using some of the files that lake wants to use and it will error out.
+* Open the folder for the repository in the terminal and run
+
+```bash
+lake exe cache get
+lake build
+```
+
+This will download a precompiled version of [mathlib4](https://github.com/leanprover-community/mathlib4).
+
+Some resources to browse Mathlib:
+* The [mathlib4 documentation](https://leanprover-community.github.io/mathlib4_docs/index.html)
+* [Loogle](https://loogle.lean-lang.org/), a pattern matching search engine for Mathlib4.
+* [Moogle](https://www.moogle.ai), semantic search over Mathlib4. 
+
+Some resources to learn Lean
+* [Natural Numbers Game](https://adam.math.hhu.de/#/g/hhu-adam/NNG4), a game introducing the basics of Lean by proving properties of the Natural Numbers, similar to `NaturalNumbers.lean`
+* Velleman's [How to prove it with Lean](https://djvelleman.github.io/HTPIwL/), which accompanies the book [How to prove it](https://users.metu.edu.tr/serge/courses/111-2011/textbook-math111.pdf).
+* [Mathematics in Lean](https://github.com/leanprover-community/mathematics_in_lean), the de facto standard interactive textbook about doing mathematics in Lean.
+* [Lamperg's introduction](https://github.com/JLimperg/regensburg-itp-school-2023) from the  2023 International Summer School on Interactions of Proof Assistants and Mathematics in Regensburg.
+* [Lean Zulip](https://leanprover.zulipchat.com/), an online forum/chat about Lean.
