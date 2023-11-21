@@ -177,77 +177,46 @@ lemma Lemma_7_1_10c {a b : Nat}
     rw [h4, h6.right, mul_one]
     done
 
-lemma mul_left_cancel {n a b : Nat} (h : n ≠ 0) :
-    n * a = n * b → a = b := by
-  assume h' : n * a = n * b
-  by_contra h''
-  have h0 : n > 0 := Nat.pos_of_ne_zero h
-  have h''' : n * a ≠ n * b := (Nat.mul_ne_mul_right h0).mpr h''
-  show False from h''' h'
-  done
+lemma dvd_gcd_dvd_left {n a b : Nat} (h : n ∣ gcd a b) : n ∣ a := by
+  define at h
+  obtain (c : Nat) (h1 : gcd a b = n * c) from h
+  have h2 : gcd a b ∣ a := gcd_dvd_left a b
+  define at h2
+  obtain (d : Nat) (h3 : a = gcd a b * d) from h2
+  define
+  apply Exists.intro (c * d)
+  rw [← mul_assoc, ← h1]
+  exact h3
 
-theorem Exercise_7_1_10 (a b n : Nat) :
+lemma dvd_gcd_dvd_right {n a b : Nat} (h : n ∣ gcd a b) : n ∣ b := by
+  rw [gcd_comm] at h
+  exact dvd_gcd_dvd_left h
+
+theorem Exercise_7_1_10₁ (a b n : Nat) :
     gcd (n * a) (n * b) = n * gcd a b := by
-  by_cases h : n = 0
-  · rw [h, zero_mul, zero_mul, gcd_base, zero_mul]
+  by_cases h0 : n = 0
+  · rw [h0, zero_mul, zero_mul, gcd_base, zero_mul]
   · have h1 : gcd a b ∣ a := gcd_dvd_left a b
     have h2 : n * gcd a b ∣ n * a := Lemma_7_1_10a n h1
     have h3 : gcd a b ∣ b := gcd_dvd_right a b
     have h4 : n * gcd a b ∣ n * b := Lemma_7_1_10a n h3
-    by_cases h5 : gcd a b = 0
-    · have h6 : a = 0 ∧ b = 0 := by
-        by_contra h
-        demorgan at h
-        have h' : gcd a b ≠ 0 := gcd_is_nonzero h
-        show False from h' h5
-      rw [h6.left, h6.right, mul_zero, gcd_base, mul_zero]
-    · have h6 : gcd (n * a) (n * b) ≠ 0 := by
-        by_contra h'
-        have h'' : n * a = 0 ∧ n * b = 0 := by
-          by_contra h''
-          demorgan at h''
-          have h''' : gcd (n * a) (n * b) ≠ 0 :=
-            gcd_is_nonzero h''
-          show False from h''' h'
-        have ha : a = 0 := by
-          have ha' : n * a = 0 := h''.left
-          by_contra ha''
-          have hna : n * a ≠ 0 := Nat.mul_ne_zero h ha''
-          show False from hna ha'
-        rw [ha, gcd_comm, gcd_base] at h5
-        have hnb : n * b ≠ 0 := Nat.mul_ne_zero h h5
-        show False from hnb h''.right
-      have h7 : n * gcd a b ≤ gcd (n * a) (n * b) :=
-        gcd_greatest h6 h2 h4
-      have h8 : n ∣ n * a := by
-        define; apply Exists.intro a; rfl
-      have h9 : n ∣ n * b := by
-        define; apply Exists.intro b; rfl
-      have h10 : n ∣ gcd (n * a) (n * b) :=
-        Theorem_7_1_6 h8 h9
-      define at h10
-      obtain (c : Nat) (h11 : gcd (n * a) (n * b) = n * c) from h10
-      have h12 : c ∣ gcd (n * a) (n * b) := by
-        define; apply Exists.intro n; rw [mul_comm c n]; exact h11
-      obtain (c₁ : Nat) (h13 : gcd (n * a) (n * b) = c * c₁) from h12
-      have h14 : gcd (n * a) (n * b) ∣ n * a := gcd_dvd_left (n * a) (n * b)
-      obtain (ca : Nat) (h15 : n * a = gcd (n * a) (n * b) * ca) from h14
-      have h16 : gcd (n * a) (n * b) ∣ n * b := gcd_dvd_right (n * a) (n * b)
-      obtain (cb : Nat) (h17 : n * b = gcd (n * a) (n * b) * cb) from h16
-      rw [h11] at h15
-      rw [h11] at h17
-      have h18 : c ∣ a := by
-        rw [mul_assoc n c ca] at h15
-        have h18 : a = c * ca := mul_left_cancel h h15
-        define; apply Exists.intro ca; exact h18
-      have h19 : c ∣ b := by
-        rw [mul_assoc n c cb] at h17
-        have h19 : b = c * cb := mul_left_cancel h h17
-        define; apply Exists.intro cb; exact h19
-      have h20 : c ≤ gcd a b := gcd_greatest h5 h18 h19
-      have h21 : n * c ≤ n * gcd a b := Nat.mul_le_mul_left n h20
-      rw [← h11] at h21
-      linarith
+    have h5 : n * gcd a b ∣ gcd (n * a) (n * b) := Theorem_7_1_6 h2 h4
+    have h6 : n ∣ n * a := by
+      define; apply Exists.intro a; rfl
+    have h7 : n ∣ n * b := by
+      define; apply Exists.intro b; rfl
+    have h8 : n ∣ gcd (n * a) (n * b) := Theorem_7_1_6 h6 h7
+    obtain (c : Nat) (h9 : gcd (n * a) (n * b) = n * c) from h8
+    have h10: n * c ∣ gcd (n * a) (n * b) := by
+      define; apply Exists.intro 1; rw [mul_one]; exact h9
+    have h11 : n * c ∣ n * a := dvd_gcd_dvd_left h10
+    have h12 : c ∣ a := Lemma_7_1_10b h0 h11
+    have h13 : n * c ∣ n * b := dvd_gcd_dvd_right h10
+    have h14 : c ∣ b := Lemma_7_1_10b h0 h13
+    have h15 : c ∣ gcd a b := Theorem_7_1_6 h12 h14
+    have h16 : n * c ∣ n * gcd a b := Lemma_7_1_10a n h15
+    rw [← h9] at h16
+    exact Lemma_7_1_10c h16 h5
   done
 
 /- Section 7.2 -/
