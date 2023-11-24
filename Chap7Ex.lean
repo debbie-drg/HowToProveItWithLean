@@ -177,22 +177,7 @@ lemma Lemma_7_1_10c {a b : Nat}
     rw [h4, h6.right, mul_one]
     done
 
-lemma dvd_gcd_dvd_left {n a b : Nat} (h : n ∣ gcd a b) : n ∣ a := by
-  define at h
-  obtain (c : Nat) (h1 : gcd a b = n * c) from h
-  have h2 : gcd a b ∣ a := gcd_dvd_left a b
-  define at h2
-  obtain (d : Nat) (h3 : a = gcd a b * d) from h2
-  define
-  apply Exists.intro (c * d)
-  rw [← mul_assoc, ← h1]
-  exact h3
-
-lemma dvd_gcd_dvd_right {n a b : Nat} (h : n ∣ gcd a b) : n ∣ b := by
-  rw [gcd_comm] at h
-  exact dvd_gcd_dvd_left h
-
-theorem Exercise_7_1_10₁ (a b n : Nat) :
+theorem Exercise_7_1_10 (a b n : Nat) :
     gcd (n * a) (n * b) = n * gcd a b := by
   by_cases h0 : n = 0
   · rw [h0, zero_mul, zero_mul, gcd_base, zero_mul]
@@ -222,48 +207,281 @@ theorem Exercise_7_1_10₁ (a b n : Nat) :
 /- Section 7.2 -/
 -- 1.
 lemma dvd_prime {a p : Nat}
-    (h1 : prime p) (h2 : a ∣ p) : a = 1 ∨ a = p := sorry
+    (h1 : prime p) (h2 : a ∣ p) : a = 1 ∨ a = p := by
+  by_cases h3 : a = 1
+  · left; exact h3
+  · right
+    define at h1
+    have two_le_p : 2 ≤ p := h1.left
+    have p_prime_cond : ¬∃ (a : ℕ), ∃ (b : ℕ), a * b = p ∧ a < p ∧ b < p := h1.right
+    obtain (b : Nat) (h4 : p = a * b) from h2
+    have h5 : a ≠ 0 := by
+      by_contra h5
+      rw [h5, zero_mul] at h4
+      linarith
+    have h6 : a ≥ p := by
+      by_contra h6
+      apply p_prime_cond
+      apply Exists.intro a; apply Exists.intro b
+      apply And.intro h4.symm
+      have h7 : a < p := by linarith
+      apply And.intro h7
+      by_contra h8
+      have h9 : b ≥ p := by linarith
+      have h10 : a > 1 := by
+        have h10 : a ≥ 1 := Nat.pos_of_ne_zero h5
+        exact lt_of_le_of_ne' h10 h3
+      have h10 : p < p := by
+        calc p
+          _ = a * b := by rw [h4]
+          _ ≥ a * p := by rel [h9]
+          _ > 1 * p := by rel [h10]
+          _ = p := by ring
+      linarith
+    have h7 : b ≥ 1 := by
+      by_contra h7
+      have h8 : b = 0 := by linarith
+      rw [h8, mul_zero] at h4
+      linarith
+    have h8 : a ≤ p := by
+      calc a
+        _ = a * 1 := by rw [mul_one]
+        _ ≤ a * b := by rel [h7]
+        _ = p := by rw [h4]
+    linarith
+  done
 
 -- 2.
 -- Hints:  Start with apply List.rec.  You may find mul_ne_zero useful
 theorem prod_nonzero_nonzero : ∀ (l : List Nat),
-    (∀ (a : Nat), a ∈ l → a ≠ 0) → prod l ≠ 0 := sorry
+    (∀ (a : Nat), a ∈ l → a ≠ 0) → prod l ≠ 0 := by
+  apply List.rec
+  · -- Base case
+    assume h : ∀ (a : ℕ), a ∈ [] → a ≠ 0
+    have h1 : prod [] = 1 := by rfl
+    linarith
+  · -- Induction step
+    fix p : Nat; fix l : List Nat
+    assume ih : (∀ (a : ℕ), a ∈ l → a ≠ 0) → prod l ≠ 0
+    assume h1 : ∀ (a : ℕ), a ∈ p :: l → a ≠ 0
+    rw [prod_cons]
+    have h2 : p ≠ 0 := by
+      have h : p ∈ p :: l := List.mem_cons_self p l
+      exact h1 p h
+    have h3 : ∀ (a : ℕ), a ∈ l → a ≠ 0 := by
+      fix a : Nat
+      assume h : a ∈ l
+      have h' : a ∈ p :: l := List.mem_cons_of_mem p h
+      exact h1 a h'
+    have h4 : prod l ≠ 0 := ih h3
+    exact Nat.mul_ne_zero h2 h4
+  done
 
 -- 3.
+lemma two_prime : prime 2 := by
+  define
+  apply And.intro
+  · linarith
+  · by_contra h
+    obtain (a : Nat) (h1 : ∃ (b : ℕ), a * b = 2 ∧ a < 2 ∧ b < 2) from h
+    obtain (b : Nat) (h2 : a * b = 2 ∧ a < 2 ∧ b < 2) from h1
+    have h3 : a ≤ 1 := by linarith
+    have h4 : b ≤ 1 := by linarith
+    have h5 : a * b ≤ 1 := by
+      calc a * b
+        _ ≤ a * 1 := by rel [h4]
+        _ ≤ 1 * 1 := by rel [h3]
+        _ = 1 := by rw [mul_one]
+    linarith
+  done
+
 theorem rel_prime_iff_no_common_factor (a b : Nat) :
-    rel_prime a b ↔ ¬∃ (p : Nat), prime p ∧ p ∣ a ∧ p ∣ b := sorry
+    rel_prime a b ↔ ¬∃ (p : Nat), prime p ∧ p ∣ a ∧ p ∣ b := by
+  apply Iff.intro
+  · assume h : rel_prime a b
+    define at h
+    by_contra h1
+    obtain (p : Nat) (h2 : prime p ∧ p ∣ a ∧ p ∣ b) from h1
+    have h3 : p ∣ gcd a b := Theorem_7_1_6 h2.right.left h2.right.right
+    rw [h] at h3
+    have h4 : p = 1 := eq_one_of_dvd_one h3
+    have h5 : p ≠ 1 := prime_not_one h2.left
+    apply h5; exact h4
+  · assume h : ¬∃ (p : ℕ), prime p ∧ p ∣ a ∧ p ∣ b
+    define
+    by_contra h1
+    by_cases h2 : gcd a b = 0
+    · have h3 : a = 0 := by
+        have h4 : gcd a b ∣ a := gcd_dvd_left a b
+        rw [h2] at h4
+        exact Nat.eq_zero_of_zero_dvd h4
+      rw [h3, gcd_comm, gcd_base] at h2
+      apply h
+      apply Exists.intro 2
+      apply And.intro two_prime
+      apply And.intro
+      · define; apply Exists.intro 0; rw [h3]
+      · define; apply Exists.intro 0; rw [h2]
+    have h3 : gcd a b ≥ 1 := by
+      have h : gcd a b > 0 := Nat.pos_of_ne_zero h2
+      linarith
+    have h4 : gcd a b ≥ 2 := by
+      have h : gcd a b > 1 := lt_of_le_of_ne' h3 h1
+      linarith
+    have h5 : ∃ (p : Nat), prime_factor p (gcd a b) := exists_prime_factor (gcd a b) h4
+    obtain (p : Nat) (h6 : prime_factor p (gcd a b)) from h5
+    define at h6
+    have h7 : p ∣ a := dvd_gcd_dvd_left h6.right
+    have h8 : p ∣ b := dvd_gcd_dvd_right h6.right
+    apply h; apply Exists.intro p
+    exact And.intro h6.left (And.intro h7 h8)
+  done
 
 -- 4.
 theorem rel_prime_symm {a b : Nat} (h : rel_prime a b) :
-    rel_prime b a := sorry
+    rel_prime b a := by
+  define
+  rw [gcd_comm]
+  define at h; exact h
+  done
 
 -- 5.
 lemma in_prime_factorization_iff_prime_factor {a : Nat} {l : List Nat}
     (h1 : prime_factorization a l) (p : Nat) :
-    p ∈ l ↔ prime_factor p a := sorry
+    p ∈ l ↔ prime_factor p a := by
+  apply Iff.intro
+  · -- (→)
+    assume h2 : p ∈ l
+    define
+    define at h1
+    have h3 : nondec_prime_list l := h1.left
+    define at h3
+    apply And.intro (h3.left p h2)
+    rw [← h1.right]
+    exact list_elt_dvd_prod h2
+  · -- (←)
+    assume h2 : prime_factor p a
+    define at h2
+    define at h1
+    have h3 : all_prime l := h1.left.left
+    rw [← h1.right] at h2
+    exact prime_in_list h2.left h3 h2.right
+  done
 
 -- 6.
 theorem Exercise_7_2_5 {a b : Nat} {l m : List Nat}
     (h1 : prime_factorization a l) (h2 : prime_factorization b m) :
-    rel_prime a b ↔ (¬∃ (p : Nat), p ∈ l ∧ p ∈ m) := sorry
+    rel_prime a b ↔ (¬∃ (p : Nat), p ∈ l ∧ p ∈ m) := by
+  apply Iff.intro
+  · -- (→)
+    assume h3 : rel_prime a b
+    by_contra h4
+    obtain (p : Nat) (h5 : p ∈ l ∧ p ∈ m) from h4
+    have h6 : ¬∃ (p : Nat), prime p ∧ p ∣ a ∧ p ∣ b := (rel_prime_iff_no_common_factor a b).mp h3
+    apply h6
+    apply Exists.intro p
+    have h7 : prime p := h1.left.left p h5.left
+    apply And.intro h7
+    rw [← h1.right, ← h2.right]
+    exact And.intro (list_elt_dvd_prod h5.left) (list_elt_dvd_prod h5.right)
+  · -- (←)
+    assume h3 : ¬∃ (p : ℕ), p ∈ l ∧ p ∈ m
+    by_contra h4
+    rw [rel_prime_iff_no_common_factor] at h4
+    double_neg at h4
+    obtain (p : Nat) (h5 : prime p ∧ p ∣ a ∧ p ∣ b) from h4
+    apply h3
+    apply Exists.intro p
+    have h6 : prime_factor p a := And.intro h5.left h5.right.left
+    have h7 : prime_factor p b := And.intro h5.left h5.right.right
+    apply And.intro
+    · exact (in_prime_factorization_iff_prime_factor h1 p).mpr h6
+    · exact (in_prime_factorization_iff_prime_factor h2 p).mpr h7
+  done
 
 -- 7.
 theorem Exercise_7_2_6 (a b : Nat) :
-    rel_prime a b ↔ ∃ (s t : Int), s * a + t * b = 1 := sorry
+    rel_prime a b ↔ ∃ (s t : Int), s * a + t * b = 1 := by
+  apply Iff.intro
+  · assume h : rel_prime a b
+    apply Exists.intro (gcd_c1 a b)
+    apply Exists.intro (gcd_c2 a b)
+    rw [← Nat.cast_one, ← h]
+    exact gcd_lin_comb b a
+  · assume h1 : ∃ (s : ℤ), ∃ (t : ℤ), s * ↑a + t * ↑b = 1
+    have h2 : (↑(gcd a b) : Int) ∣ 1 := (Exercise_7_1_5 a b (1 : Int)).mp h1
+    rw [← Nat.cast_one, Int.coe_nat_dvd] at h2
+    exact eq_one_of_dvd_one h2
+  done
 
 -- 8.
 theorem Exercise_7_2_7 {a b a' b' : Nat}
     (h1 : rel_prime a b) (h2 : a' ∣ a) (h3 : b' ∣ b) :
-    rel_prime a' b' := sorry
+    rel_prime a' b' := by
+  rw [rel_prime_iff_no_common_factor]
+  rw [rel_prime_iff_no_common_factor] at h1
+  by_contra h4
+  obtain (p : Nat) (h5 : prime p ∧ p ∣ a' ∧ p ∣ b') from h4
+  apply h1
+  apply Exists.intro p
+  apply And.intro h5.left
+  apply And.intro
+  · exact dvd_trans h5.right.left h2
+  · exact dvd_trans h5.right.right h3
+  done
 
 -- 9.
 theorem Exercise_7_2_9 {a b j k : Nat}
     (h1 : gcd a b ≠ 0) (h2 : a = j * gcd a b) (h3 : b = k * gcd a b) :
-    rel_prime j k := sorry
+    rel_prime j k := by
+  set s : Int := gcd_c1 a b
+  set t : Int := gcd_c2 a b
+  have h4 : s * ↑a + t * ↑b = ↑(gcd a b) := gcd_lin_comb b a
+  nth_rewrite 1 [h3, h2] at h4
+  rw [Nat.cast_mul, Nat.cast_mul] at h4
+  have h5 : ↑(gcd a b) = (s * ↑j + t * ↑k) * ↑(gcd a b) := by
+    calc ↑(gcd a b)
+      _ = s * (↑j * ↑(gcd a b)) + t * (↑k * ↑(gcd a b)) := by rw [h4]
+      _ = (s * ↑j) * ↑(gcd a b) + (t * ↑k) * ↑(gcd a b) := by ring
+      _ = (s * ↑j + t * ↑k) * ↑(gcd a b) := by ring
+  have h6 : (↑(gcd a b) : Int) ≠ ↑0 := by
+    by_contra h6
+    rw [← Nat.cast_zero, Int.cast_eq_cast_iff_Nat] at h6
+    show False from h1 h6
+  nth_rewrite 1 [← Int.one_mul ↑(gcd a b)] at h5
+  have h7 : 1 = (s * ↑j + t * ↑k) := Int.eq_of_mul_eq_mul_right h6 h5
+  have h8 : ∃ (s t : Int), s * j + t * k = 1 := by
+    apply Exists.intro s; apply Exists.intro t; exact h7.symm
+  exact (Exercise_7_2_6 j k).mpr h8
+  done
 
 -- 10.
 theorem Exercise_7_2_17a (a b c : Nat) :
-    gcd a (b * c) ∣ gcd a b * gcd a c := sorry
+    gcd a (b * c) ∣ gcd a b * gcd a c := by
+  set s : Int := gcd_c1 a b
+  set t : Int := gcd_c2 a b
+  set u : Int := gcd_c1 a c
+  set v : Int := gcd_c2 a c
+  have h1 : s * ↑a + t * ↑b = ↑(gcd a b) := gcd_lin_comb b a
+  have h2 : u * ↑a + v * ↑c = ↑(gcd a c) := gcd_lin_comb c a
+  have h3 : ↑(gcd a b * gcd a c) =
+    (s * u * ↑a + s * v * ↑c + t * ↑b * u) * ↑a + (t * v) * ↑(b * c) := by
+    calc ↑(gcd a b * gcd a c)
+      _ = ↑(gcd a b) * ↑(gcd a c) := by rw [Nat.cast_mul]
+      _ = (s * ↑a + t * ↑b) * (u * ↑a + v * ↑c) := by rw [h1, h2]
+      _ = s * ↑a * u * ↑a + s * ↑a * v * ↑c + t * ↑b * u * ↑a + t * ↑b * v * ↑c := by ring
+      _ = s * u * ↑a * ↑a + s * v * ↑c * ↑a +  t * ↑b * u * ↑a + t * v * (↑b * ↑c) := by ring
+      _ = s * u * ↑a * ↑a + s * v * ↑c * ↑a +  t * ↑b * u * ↑a + t * v * ↑(b * c) := by rw [← Nat.cast_mul b c]
+      _ = (s * u * ↑a + s * v * ↑c + t * ↑b * u) * ↑a + (t * v) * ↑(b * c) := by ring
+  have h4 : ∃ (s t : Int),  s * ↑a + t * ↑(b * c) = ↑(gcd a b * gcd a c) := by
+    apply Exists.intro (s * u * ↑a + s * v * ↑c + t * ↑b * u)
+    apply Exists.intro (t * v)
+    exact h3.symm
+  have h5 : ↑(gcd a (b * c)) ∣ (↑(gcd a b * gcd a c) : Int) :=
+    (Exercise_7_1_5 a (b * c) ↑(gcd a b * gcd a c)).mp h4
+  rw [Int.coe_nat_dvd] at h5
+  exact h5
+  done
 
 /- Section 7.3 -/
 -- 1.

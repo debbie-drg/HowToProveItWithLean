@@ -21,7 +21,7 @@ mutual
   def gcd_c1 (a b : Nat) : Int :=
     match b with
       | 0 => 1
-      | n + 1 => 
+      | n + 1 =>
         have : a % (n + 1) < n + 1 := mod_succ_lt a n
         gcd_c2 (n + 1) (a % (n + 1))
           --Corresponds to s = t'
@@ -255,7 +255,7 @@ theorem Theorem_7_1_6 {d a b : Nat} (h1 : d ∣ a) (h2 : d ∣ b) :
   ring
   done
 
-/- Section 7.2 -/ 
+/- Section 7.2 -/
 theorem dvd_trans {a b c : Nat} (h1 : a ∣ b) (h2 : b ∣ c) : a ∣ c := by
   define at h1; define at h2; define
   obtain (m : Nat) (h3 : b = a * m) from h1
@@ -264,6 +264,14 @@ theorem dvd_trans {a b c : Nat} (h1 : a ∣ b) (h2 : b ∣ c) : a ∣ c := by
   apply Exists.intro (m * n)
   show c = a * (m * n) from h4
   done
+
+lemma dvd_gcd_dvd_left {n a b : Nat} (h : n ∣ gcd a b) : n ∣ a := by
+  have h2 : gcd a b ∣ a := gcd_dvd_left a b
+  exact dvd_trans h h2
+
+lemma dvd_gcd_dvd_right {n a b : Nat} (h : n ∣ gcd a b) : n ∣ b := by
+  have h2 : gcd a b ∣ b := gcd_dvd_right a b
+  exact dvd_trans h h2
 
 lemma exists_prime_factor : ∀ (n : Nat), 2 ≤ n →
     ∃ (p : Nat), prime_factor p n := by
@@ -691,7 +699,7 @@ lemma nondec_prime_list_tail {p : Nat} {l : List Nat}
   define at h
   define
   rewrite [all_prime_cons, nondec_cons] at h
-  show all_prime l ∧ nondec l from And.intro h.left.right h.right.right 
+  show all_prime l ∧ nondec l from And.intro h.left.right h.right.right
   done
 
 lemma cons_prod_not_one {p : Nat} {l : List Nat}
@@ -1006,7 +1014,7 @@ theorem Theorem_7_3_1 (m : Nat) [NeZero m] (a : Int) :
     done
   done
 
-lemma cc_eq_mod (m : Nat) (a : Int) : [a]_m = [a % m]_m := 
+lemma cc_eq_mod (m : Nat) (a : Int) : [a]_m = [a % m]_m :=
   (cc_eq_iff_congr m a (a % m)).rtl (congr_mod_mod m a)
 
 theorem Theorem_7_3_6_1 {m : Nat} (X Y : ZMod m) : X + Y = Y + X := by
