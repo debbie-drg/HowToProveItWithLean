@@ -1,5 +1,6 @@
 import HTPILib.HTPIDefs
 import HTPILib.Chap6
+import HTPILib.Chap7
 
 namespace HTPI
 
@@ -16,7 +17,7 @@ Recall that the remainder operation was denoted `a % b`.
 The main ingredient of the algorithm lies in the next two results.
 -/
 
-theorem dvd_mod_of_dvd_a_b {a b d : Nat}
+theorem dvd_mod_of_dvd_a_b' {a b d : Nat}
     (h1 : d ∣ a) (h2 : d ∣ b) : d ∣ (a % b) := by
   set q : Nat := a / b
   have h3 : b * q + a % b = a := Nat.div_add_mod a b
@@ -32,7 +33,7 @@ theorem dvd_mod_of_dvd_a_b {a b d : Nat}
       _ = d * (j - k * q) := (Nat.mul_sub_left_distrib _ _ _).symm
   done
 
-theorem dvd_a_of_dvd_b_mod {a b d : Nat}
+theorem dvd_a_of_dvd_b_mod' {a b d : Nat}
     (h1 : d ∣ b) (h2 : d ∣ (a % b)) : d ∣ a := by
   set q : Nat := a / b
   have h3 : b * q + a % b = a := Nat.div_add_mod a b
@@ -95,7 +96,7 @@ it claims to have proven that `a % (n + 1) < Nat.succ n`. where
 `Nat.succ n` is `n + 1`. We need to produce a proof of this fact.
 -/
 
-lemma mod_succ_lt (a n : Nat) : a % (n + 1) < n + 1 := by
+lemma mod_succ_lt' (a n : Nat) : a % (n + 1) < n + 1 := by
   have h : n + 1 > 0 := Nat.succ_pos n
   show a % (n + 1) < n + 1 from Nat.mod_lt a h
   done
@@ -105,13 +106,13 @@ With this, and using a `have` expression as suggested by the error, we
 can finally successfully define the function.
 -/
 
-def gcd (a b : Nat) : Nat :=
+def gcd' (a b : Nat) : Nat :=
   match b with
     | 0 => a
     | n + 1 =>
       have : a % (n + 1) < n + 1 := mod_succ_lt a n
-      gcd (n + 1) (a % (n + 1))
-  termination_by gcd a b => b
+      gcd' (n + 1) (a % (n + 1))
+  termination_by gcd' a b => b
 
 /-
 And now we can compute stuff!
@@ -123,21 +124,21 @@ And now we can compute stuff!
 We now move to establishing the main properties of gcd.
 -/
 
-lemma gcd_base (a : Nat) : gcd a 0 = a := by rfl
+lemma gcd_base' (a : Nat) : gcd a 0 = a := by rfl
 
-lemma gcd_nonzero (a : Nat) {b : Nat} (h : b ≠ 0) :
+lemma gcd_nonzero' (a : Nat) {b : Nat} (h : b ≠ 0) :
     gcd a b = gcd b (a % b) := by
   obtain (n : Nat) (h2 : b = n + 1) from exists_eq_add_one_of_ne_zero h
   rewrite [h2]
   rfl
   done
 
-lemma mod_nonzero_lt (a : Nat) {b : Nat} (h : b ≠ 0) : a % b < b := by
+lemma mod_nonzero_lt' (a : Nat) {b : Nat} (h : b ≠ 0) : a % b < b := by
   have h1 : b > 0 := Nat.pos_of_ne_zero h
   show a % b < b from Nat.mod_lt a h1
   done
 
-lemma dvd_self (n : Nat) : n ∣ n := by
+lemma dvd_self' (n : Nat) : n ∣ n := by
   apply Exists.intro 1
   rw [mul_one]
   done
@@ -147,7 +148,7 @@ One important result is that `gcd a b` divices both `a` and `b`. We prove it by 
 induction.
 -/
 
-theorem gcd_dvd : ∀ (b a : Nat), (gcd a b) ∣ a ∧ (gcd a b) ∣ b := by
+theorem gcd_dvd' : ∀ (b a : Nat), (gcd a b) ∣ a ∧ (gcd a b) ∣ b := by
   by_strong_induc
   fix b : ℕ
   assume ih : ∀ (b' : ℕ), b' < b → ∀ (a : ℕ), gcd a b' ∣ a ∧ gcd a b' ∣ b'
@@ -174,9 +175,9 @@ induction, because of how the `gcd` function is defined.
 We can now get two different theorems stating this relation for both left and right.
 -/
 
-theorem gcd_dvd_left (a b : Nat) : (gcd a b) ∣ a := (gcd_dvd b a).left
+theorem gcd_dvd_left' (a b : Nat) : (gcd a b) ∣ a := (gcd_dvd b a).left
 
-theorem gcd_dvd_right (a b : Nat) : (gcd a b) ∣ b := (gcd_dvd b a).right
+theorem gcd_dvd_right' (a b : Nat) : (gcd a b) ∣ b := (gcd_dvd b a).right
 
 /-
 Euclid's algorithm to compute thet `gcd` can be extended to show constructively
@@ -208,44 +209,44 @@ type coercion will be used.
 -/
 
 mutual
-  def gcd_c1 (a b : Nat) : Int :=
+  def gcd_c1' (a b : Nat) : Int :=
     match b with
       | 0 => 1
       | n + 1 =>
         have : a % (n + 1) < n + 1 := mod_succ_lt a n
-        gcd_c2 (n + 1) (a % (n + 1))
+        gcd_c2' (n + 1) (a % (n + 1))
           --Corresponds to s = t' in (*)
 
-  def gcd_c2 (a b : Nat) : Int :=
+  def gcd_c2' (a b : Nat) : Int :=
     match b with
       | 0 => 0
       | n + 1 =>
         have : a % (n + 1) < n + 1 := mod_succ_lt a n
-        gcd_c1 (n + 1) (a % (n + 1)) -
-          (gcd_c2 (n + 1) (a % (n + 1))) * ↑(a / (n + 1))
+        gcd_c1' (n + 1) (a % (n + 1)) -
+          (gcd_c2' (n + 1) (a % (n + 1))) * ↑(a / (n + 1))
           --Corresponds to t = s' - t'q in (*)
 end
   termination_by
-    gcd_c1 a b => b
-    gcd_c2 a b => b
+    gcd_c1' a b => b
+    gcd_c2' a b => b
 
 /-
 We now prove the desired result: that this function provides the coefficients to write
 the gcd. Let us begin with some lemmas.
 -/
 
-lemma gcd_c1_base (a : Nat) : gcd_c1 a 0 = 1 := by rfl
+lemma gcd_c1_base' (a : Nat) : gcd_c1 a 0 = 1 := by rfl
 
-lemma gcd_c1_nonzero (a : Nat) {b : Nat} (h : b ≠ 0) :
+lemma gcd_c1_nonzero' (a : Nat) {b : Nat} (h : b ≠ 0) :
     gcd_c1 a b = gcd_c2 b (a % b) := by
   obtain (n : ℕ) (h1 : b = n + 1) from exists_eq_add_one_of_ne_zero h
   rw [h1]
   rfl
   done
 
-lemma gcd_c2_base (a : Nat) : gcd_c2 a 0 = 0 := by rfl
+lemma gcd_c2_base' (a : Nat) : gcd_c2 a 0 = 0 := by rfl
 
-lemma gcd_c2_nonzero (a : Nat) {b : Nat} (h : b ≠ 0) :
+lemma gcd_c2_nonzero' (a : Nat) {b : Nat} (h : b ≠ 0) :
     gcd_c2 a b = gcd_c1 b (a % b) - (gcd_c2 b (a % b)) * ↑(a / b) := by
   obtain (n : Nat) (h2 : b = n + 1) from exists_eq_add_one_of_ne_zero h
   rw [h2]
@@ -256,7 +257,7 @@ lemma gcd_c2_nonzero (a : Nat) {b : Nat} (h : b ≠ 0) :
 And now we can prove the result.
 -/
 
-theorem gcd_lin_comb : ∀ (b a : Nat),
+theorem gcd_lin_comb' : ∀ (b a : Nat),
     (gcd_c1 a b) * ↑a + (gcd_c2 a b) * ↑b = ↑(gcd a b) := by
   by_strong_induc
   fix b : ℕ
@@ -295,7 +296,7 @@ It makes the remaining naturals in the expression into integers.
 We finish this section with another result.
 -/
 
-theorem Theorem_7_1_6 {d a b : Nat} (h1 : d ∣ a) (h2 : d ∣ b) :
+theorem Theorem_7_1_6' {d a b : Nat} (h1 : d ∣ a) (h2 : d ∣ b) :
     d ∣ gcd a b := by
   rewrite [←Int.coe_nat_dvd]
   set s : Int := gcd_c1 a b
@@ -318,7 +319,7 @@ naturals, when both numbers are natural.
 
 -- Section 7.2. Prime factorization
 
-def prime (n : Nat) : Prop :=
+def prime' (n : Nat) : Prop :=
   2 ≤ n ∧ ¬∃ (a b : Nat), a * b = n ∧ a < n ∧ b < n
 
 /-
@@ -326,9 +327,9 @@ The main goal of this section is to prove that every integer has a unique factor
 Let us first prove that every natural number greater or equal than 2 has a prime factor.
 -/
 
-def prime_factor (p n : Nat) : Prop := prime p ∧ p ∣ n
+def prime_factor' (p n : Nat) : Prop := prime p ∧ p ∣ n
 
-lemma dvd_trans {a b c : Nat} (h1 : a ∣ b) (h2 : b ∣ c) : a ∣ c := by
+lemma dvd_trans' {a b c : Nat} (h1 : a ∣ b) (h2 : b ∣ c) : a ∣ c := by
   define at h1
   obtain (c₁ : Nat) (h3 : b = a * c₁) from h1
   define at h2
@@ -338,7 +339,7 @@ lemma dvd_trans {a b c : Nat} (h1 : a ∣ b) (h2 : b ∣ c) : a ∣ c := by
   rw [← mul_assoc, ← h3, ← h4]
   done
 
-lemma exists_prime_factor : ∀ (n : Nat), 2 ≤ n →
+lemma exists_prime_factor' : ∀ (n : Nat), 2 ≤ n →
     ∃ (p : Nat), prime_factor p n := by
   by_strong_induc
   fix n : Nat
@@ -381,7 +382,7 @@ By the well ordering principle, every number greater to or equal than 2 must
 have a smallest prime factor.
 -/
 
-lemma exists_least_prime_factor {n : Nat} (h : 2 ≤ n) :
+lemma exists_least_prime_factor' {n : Nat} (h : 2 ≤ n) :
     ∃ (p : Nat), prime_factor p n ∧
     ∀ (q : Nat), prime_factor q n → p ≤ q := by
   set S : Set Nat := { p : Nat | prime_factor p n }
@@ -423,24 +424,24 @@ Here are some basic results about the `cons` operator.
 Let us define some properties that we need towards our goals.
 -/
 
-def all_prime (l : List Nat) : Prop := ∀ p ∈ l, prime p
+def all_prime' (l : List Nat) : Prop := ∀ p ∈ l, prime p
 -- Every member of the list is prime
 
-def nondec (l : List Nat) : Prop :=
+def nondec' (l : List Nat) : Prop :=
   match l with
     | [] => True   -- True is a proposition that is always true
     | n :: L => (∀ m ∈ L, n ≤ m) ∧ nondec L
 -- Every member of the list is less than or equal to all later members
 
-def nondec_prime_list (l : List Nat) : Prop := all_prime l ∧ nondec l
+def nondec_prime_list' (l : List Nat) : Prop := all_prime l ∧ nondec l
 
-def prod (l : List Nat) : Nat :=
+def prod' (l : List Nat) : Nat :=
   match l with
     | [] => 1
     | n :: L => n * (prod L)
 -- The product of all members of l
 
-def prime_factorization (n : Nat) (l : List Nat) : Prop :=
+def prime_factorization' (n : Nat) (l : List Nat) : Prop :=
   nondec_prime_list l ∧ prod l = n
 -- l is a non-decerasing list of prime numbers whose product is n.
 
@@ -448,7 +449,7 @@ def prime_factorization (n : Nat) (l : List Nat) : Prop :=
 Let us prove some results
 -/
 
-lemma all_prime_nil : all_prime [] := by
+lemma all_prime_nil' : all_prime [] := by
   define
   fix p : Nat
   contrapos
@@ -456,7 +457,7 @@ lemma all_prime_nil : all_prime [] := by
   show p ∉ [] from List.not_mem_nil p
   done
 
-lemma all_prime_cons (n : Nat) (L : List Nat) :
+lemma all_prime_cons' (n : Nat) (L : List Nat) :
     all_prime (n :: L) ↔ prime n ∧ all_prime L := by
   apply Iff.intro
   · -- (→)
@@ -477,17 +478,17 @@ lemma all_prime_cons (n : Nat) (L : List Nat) :
     · exact h1.right p h2
   done
 
-lemma nondec_nil : nondec [] := by
+lemma nondec_nil' : nondec [] := by
   define
   trivial -- Proves some obviously true statements
   done
 
-lemma nondec_cons (n : Nat) (L : List Nat) :
+lemma nondec_cons' (n : Nat) (L : List Nat) :
     nondec (n :: L) ↔ (∀ m ∈ L, n ≤ m) ∧ nondec L := by rfl
 
-lemma prod_nil : prod [] = 1 := by rfl
+lemma prod_nil' : prod [] = 1 := by rfl
 
-lemma prod_cons : prod (n :: L) = n * (prod L) := by rfl
+lemma prod_cons' : prod (n :: L) = n * (prod L) := by rfl
 
 /-
 We now quickly review some other statements about lists.
@@ -505,7 +506,7 @@ If `l` is a list, we can get its length as `List.length l` or `l.length`.
 
 /- And one last lemma -/
 
-lemma exists_cons_of_length_eq_succ {A : Type}
+lemma exists_cons_of_length_eq_succ' {A : Type}
     {l : List A} {n : Nat} (h : l.length = n + 1) :
     ∃ (a : A) (L : List A), l = a :: L ∧ L.length = n := by
   have h1 : l ≠ [] := by
@@ -526,7 +527,7 @@ We can now prove that every member of a list of natural numbers divides
 the product of the list.
 -/
 
-lemma list_elt_dvd_prod_by_length (a : Nat) : ∀ (n : Nat),
+lemma list_elt_dvd_prod_by_length' (a : Nat) : ∀ (n : Nat),
     ∀ (l : List Nat), l.length = n → a ∈ l → a ∣ prod l := by
   by_induc
   · fix l : List Nat; assume h1 : l.length = 0
@@ -555,7 +556,7 @@ lemma list_elt_dvd_prod_by_length (a : Nat) : ∀ (n : Nat),
       exact dvd_trans h6 h7
   done
 
-lemma list_elt_dvd_prod {a : Nat} {l : List Nat}
+lemma list_elt_dvd_prod' {a : Nat} {l : List Nat}
     (h : a ∈ l) : a ∣ prod l := by
   set n : Nat := l.length
   have h1 : l.length = n := by rfl
@@ -566,7 +567,7 @@ lemma list_elt_dvd_prod {a : Nat} {l : List Nat}
 We can now prove that every natural has a prime factorization.
 -/
 
-lemma exists_prime_factorization : ∀ (n : Nat), n ≥ 1 →
+lemma exists_prime_factorization' : ∀ (n : Nat), n ≥ 1 →
     ∃ (l : List Nat), prime_factorization n l := by
   by_strong_induc
   fix n : Nat
@@ -649,9 +650,9 @@ lemma exists_prime_factorization : ∀ (n : Nat), n ≥ 1 →
 We now turn to uniqueness. We first need the concept of relative primes.
 -/
 
-def rel_prime (a b : Nat) : Prop := gcd a b = 1
+def rel_prime' (a b : Nat) : Prop := gcd a b = 1
 
-theorem Theorem_7_2_2 {a b c : Nat}
+theorem Theorem_7_2_2' {a b c : Nat}
     (h1 : c ∣ a * b) (h2 : rel_prime a c) : c ∣ b := by
   rw [←Int.coe_nat_dvd]
   define at h1; define at h2; define
@@ -671,7 +672,7 @@ theorem Theorem_7_2_2 {a b c : Nat}
       _ = ↑c * (s * ↑j + t * ↑b) := by ring
   done
 
-lemma dvd_prime {a p : Nat}
+lemma dvd_prime' {a p : Nat}
     (h1 : prime p) (h2 : a ∣ p) : a = 1 ∨ a = p := by
   by_cases h3 : a = 1
   · left; exact h3
@@ -716,7 +717,7 @@ lemma dvd_prime {a p : Nat}
     linarith
   done
 
-lemma rel_prime_of_prime_not_dvd {a p : Nat}
+lemma rel_prime_of_prime_not_dvd' {a p : Nat}
     (h1 : prime p) (h2 : ¬p ∣ a) : rel_prime a p := by
   have h3 : gcd a p ∣ a := gcd_dvd_left a p
   have h4 : gcd a p ∣ p := gcd_dvd_right a p
@@ -730,7 +731,7 @@ lemma rel_prime_of_prime_not_dvd {a p : Nat}
   show rel_prime a p from h5
   done
 
-theorem Theorem_7_2_3 {a b p : Nat}
+theorem Theorem_7_2_3' {a b p : Nat}
     (h1 : prime p) (h2 : p ∣ a * b) : p ∣ a ∨ p ∣ b := by
   or_right with h3
   have h4 : rel_prime a p := rel_prime_of_prime_not_dvd h1 h3
@@ -743,7 +744,7 @@ to justify induction on lists, which is more convenient than doing
 induction on the length of a list.
 -/
 
-lemma eq_one_of_dvd_one {n : Nat} (h : n ∣ 1) : n = 1 := by
+lemma eq_one_of_dvd_one' {n : Nat} (h : n ∣ 1) : n = 1 := by
   define at h
   obtain (c : Nat) (h1 : 1 = n * c) from h
   by_contra h2
@@ -767,12 +768,12 @@ lemma eq_one_of_dvd_one {n : Nat} (h : n ∣ 1) : n = 1 := by
     trivial
   done
 
-lemma prime_not_one {p : Nat} (h : prime p) : p ≠ 1 := by
+lemma prime_not_one' {p : Nat} (h : prime p) : p ≠ 1 := by
   define at h
   have h1 : 2 ≤ p := h.left
   linarith
 
-theorem Theorem_7_2_4 {p : Nat} (h1 : prime p) :
+theorem Theorem_7_2_4' {p : Nat} (h1 : prime p) :
     ∀ (l : List Nat), p ∣ prod l → ∃ a ∈ l, p ∣ a := by
   apply List.rec
   · -- Base case
@@ -798,7 +799,7 @@ theorem Theorem_7_2_4 {p : Nat} (h1 : prime p) :
       exact And.intro (List.mem_cons_of_mem b h4.left) h4.right
   done
 
-lemma prime_in_list {p : Nat} {l : List Nat}
+lemma prime_in_list' {p : Nat} {l : List Nat}
     (h1 : prime p) (h2 : all_prime l) (h3 : p ∣ prod l) : p ∈ l := by
   obtain (a : Nat) (h4 : a ∈ l ∧ p ∣ a) from Theorem_7_2_4 h1 l h3
   define at h2
@@ -809,7 +810,7 @@ lemma prime_in_list {p : Nat} {l : List Nat}
   show a ∈ l from h4.left
   done
 
-lemma first_le_first {p q : Nat} {l m : List Nat}
+lemma first_le_first' {p q : Nat} {l m : List Nat}
     (h1 : nondec_prime_list (p :: l)) (h2 : nondec_prime_list (q :: m))
     (h3 : prod (p :: l) = prod (q :: m)) : p ≤ q := by
   define at h1; define at h2
@@ -835,7 +836,7 @@ lemma first_le_first {p q : Nat} {l m : List Nat}
     done
   done
 
-lemma nondec_prime_list_tail {p : Nat} {l : List Nat}
+lemma nondec_prime_list_tail' {p : Nat} {l : List Nat}
     (h : nondec_prime_list (p :: l)) : nondec_prime_list l := by
   define at h
   define
@@ -850,7 +851,7 @@ lemma nondec_prime_list_tail {p : Nat} {l : List Nat}
     exact h2.right
   done
 
-lemma cons_prod_not_one {p : Nat} {l : List Nat}
+lemma cons_prod_not_one' {p : Nat} {l : List Nat}
     (h : nondec_prime_list (p :: l)) : prod (p :: l) ≠ 1 := by
   define at h
   have h1 : all_prime (p :: l) := h.left
@@ -865,7 +866,7 @@ lemma cons_prod_not_one {p : Nat} {l : List Nat}
   apply h5; exact h7
   done
 
-lemma list_nil_iff_prod_one {l : List Nat} (h : nondec_prime_list l) :
+lemma list_nil_iff_prod_one' {l : List Nat} (h : nondec_prime_list l) :
     l = [] ↔ prod l = 1 := by
   apply Iff.intro
   · assume h1 : l = []
@@ -882,13 +883,13 @@ lemma list_nil_iff_prod_one {l : List Nat} (h : nondec_prime_list l) :
     exact h1
   done
 
-lemma prime_pos {p : Nat} (h : prime p) : p > 0 := by
+lemma prime_pos' {p : Nat} (h : prime p) : p > 0 := by
   define at h
   have h1 : 2 ≤ p := h.left
   linarith
   done
 
-theorem Theorem_7_2_5 : ∀ (l1 l2 : List Nat),
+theorem Theorem_7_2_5' : ∀ (l1 l2 : List Nat),
     nondec_prime_list l1 → nondec_prime_list l2 →
     prod l1 = prod l2 → l1 = l2 := by
   apply List.rec
@@ -934,7 +935,7 @@ theorem Theorem_7_2_5 : ∀ (l1 l2 : List Nat),
 Finally, we can prove the fundamental theorem of arithmetic
 -/
 
-theorem fund_thm_arith (n : Nat) (h : n ≥ 1) :
+theorem fund_thm_arith' (n : Nat) (h : n ≥ 1) :
     ∃! (l : List Nat), prime_factorization n l := by
   exists_unique
   · -- Existence
@@ -946,4 +947,312 @@ theorem fund_thm_arith (n : Nat) (h : n ≥ 1) :
     have h3 : prod l1 = n := h1.right
     rw [← h2.right] at h3
     exact Theorem_7_2_5 l1 l2 h1.left h2.left h3
+  done
+
+
+-- Section 7.3. Modular arithmetic
+
+/-
+Congruence modulo a number, `a ≡ b (mod m)`, also denoted `a ≡ₘ b`,
+means that `a` and `b` have the same remainder when dividing by `m`.
+Equivalently, `m ∣ (a - b)`.
+
+It is an equivalence relation over the integers, and we can thus
+consider `ℤ/≡ₘ`. The equivalence classes `[a]ₘ` are referred to as the
+congruence classes modulo m. We cvan define an operation on congruences
+that satisfies nice properties:
+
+1. For every `a : ℤ`, there is a congruence class `[a]ₘ ∈ ℤ/≡ₘ`
+2. For every class `x ∈ ℤ/≡ₘ`, there is some integer `a` with `x = [a]ₘ`
+3. For all integers `a` and `b`, `[a]ₘ = [b]ₘ ↔ a ≡ₘ b`
+4. For all integers `a` and `b`, `[a]ₘ + [b]ₘ = [a + b]ₘ`
+5. For all integers `a` and `b`, `[a]ₘ * [b]ₘ = [a * b]ₘ`
+
+We will assume `m` to be a natural. Note that this includes the possibility
+of `m = 0`, but we will focus on `m ≠ 0`. Our Lean definition is as
+follows.
+-/
+
+def congr_mod' (m : Nat) (a b : Int) : Prop := (↑m : Int) ∣ (a - b)
+
+/-
+We can use metaprogramming to introduce a nicer notation for this fact.
+The following line is in the library for Chapter 7.
+
+`notation:50 a " ≡ " b " (MOD " m ")" => congr_mod' m a b`
+-/
+
+/-
+Lets prove that this is indeed an equivalence relation.
+-/
+
+theorem congr_refl' (m : Nat) : ∀ (a : Int), a ≡ a (MOD m) := by
+  fix a : Int
+  define
+  apply Exists.intro 0
+  ring
+  done
+
+theorem congr_symm' {m : Nat} : ∀ {a b : Int},
+    a ≡ b (MOD m) → b ≡ a (MOD m) := by
+  fix a : Int; fix b : Int
+  assume h1 : a ≡ b (MOD m)
+  define at h1
+  define
+  obtain (c : Int) (h2 : a - b = m * c) from h1
+  apply Exists.intro (-c)
+  show b - a = m * (-c) from
+    calc b - a
+      _ = -(a - b) := by ring
+      _ = -(m * c) := by rw [h2]
+      _ = m * (-c) := by ring
+  done
+
+theorem congr_trans' {m : Nat} : ∀ {a b c : Int},
+    a ≡ b (MOD m) → b ≡ c (MOD m) → a ≡ c (MOD m) := by
+  fix a : Int; fix b : Int; fix c : Int
+  assume h1 : a ≡ b (MOD m)
+  assume h2 : b ≡ c (MOD m)
+  define at h1; define at h2
+  obtain (d : Int) (h3 : a - b = m * d) from h1
+  obtain (e : Int) (h4 : b - c = m * e) from h2
+  define
+  apply Exists.intro (d + e)
+  show a - c = m * (d + e) from
+    calc a - c
+      _ = (a - b) + (b - c) := by ring
+      _ = m * d + m * e := by rw [h3, h4]
+      _ = m * (d + e) := by ring
+  done
+
+/-
+We could now repeat the development of `ℤ/≡ₘ`, but it is already
+included in Lean. For each `m`, Lean has the type `ZMod m`.
+Note, however, that objects of type `ZMod m` are not sets of integers.
+However, we do have the 5 properties listed above.
+-/
+
+/-
+Property 1: If `a` has type `Int`, there should be a corresponding
+congruence class in `ZMod m`.
+-/
+
+def cc' (m : Nat) (a : Int) : ZMod m := (↑a : ZMod m)
+
+/-
+`cc m a` is the congruence class of `a` modulo `m`. Again, we override
+the notation. The following line is in the Library.
+
+`notation:max "["a"]_"m:max => cc m a`
+-/
+
+
+
+/-
+From now on, `[a]_m` is interpreted by Lean to mean cc m a.
+-/
+
+/-
+Properties 2-5 are included in the library and are beyond the
+scope of this book.
+-/
+
+#check cc_rep
+-- ∀ {m : ℕ} (X : ZMod m), ∃ (a : ℤ), X = [a]_m
+
+#check cc_eq_iff_congr
+-- ∀ (m : ℕ) (a b : ℤ), [a]_m = [b]_m ↔ a ≡ b (MOD m)
+
+#check add_class
+-- ∀ (m : ℕ) (a b : ℤ), [a]_m + [b]_m = [a + b]_m
+
+#check mul_class
+-- ∀ (m : ℕ) (a b : ℤ), [a]_m * [b]_m = [a * b]_m
+
+
+/-
+In many results we will need to include the hypothesis `m ≠ 0`.
+This is usually stated by the equivalent `NeZero m`.
+-/
+
+#check neZero_iff
+
+/-
+The distinguishing factor between the two statements is that
+`NeZero m` is a type class. This means that once Lean has a proof
+of `NeZero m`, it will remember that proof and recall it if necessary.
+-/
+
+/-
+We will need results similar to those of divisibility of natural numbers,
+but for the integers. Those are already included in Mathlib.
+-/
+
+#check Int.ediv_add_emod
+-- ∀ (a b : ℤ), b * (a / b) + a % b = a
+
+#check Int.emod_lt_of_pos
+-- ∀ (a : ℤ) {b : ℤ}, 0 < b → a % b < b
+
+#check Int.emod_nonneg
+-- ∀ (a : ℤ) {b : ℤ}, b ≠ 0 → 0 ≤ a % b
+
+/-
+We now have enough background to prove that if `m ≠ 0`, every integer
+`a` is congruente modulo `m` to exactly one integer `r` such that
+`0 ≤ r < m`.
+-/
+
+/-
+Note that when we write `a % m`, since `a` is an integer it must be
+the integer operator, so `m` is implicitly coerced to an integer.
+-/
+
+lemma mod_nonneg' (m : Nat) [NeZero m] (a : Int) : 0 ≤ a % m := by
+  have h1 : (↑m : Int) ≠ 0 := (Nat.cast_ne_zero).rtl (NeZero.ne m)
+  exact Int.emod_nonneg a h1
+
+lemma mod_lt' (m : Nat) [NeZero m] (a : Int) : a % m < m := by
+  have h1 : 0 < m := by
+    have h : m ≠ 0 := NeZero.ne m
+    exact Nat.pos_of_ne_zero h
+  have h2 : ↑0 < (↑m : Int) := by linarith
+  exact Int.emod_lt_of_pos a h2
+  done
+
+lemma congr_mod_mod' (m : Nat) (a : Int) : a ≡ a % m (MOD m) := by
+  define
+  have h1 : m * (a / m) + a % m = a := Int.ediv_add_emod a m
+  apply Exists.intro (a / m)
+  show a - a % m = m * (a / m) from
+    calc a - (a % m)
+      _ = m * (a / m) + a % m - a % m := by rw [h1]
+      _ = m * (a / m) := by ring
+  done
+
+lemma mod_cmpl_res' (m : Nat) [NeZero m] (a : Int) :
+    0 ≤ a % m ∧ a % m < m ∧ a ≡ a % m (MOD m) :=
+  And.intro (mod_nonneg m a) (And.intro (mod_lt m a) (congr_mod_mod m a))
+
+theorem Theorem_7_3_1' (m : Nat) [NeZero m] (a : Int) :
+    ∃! (r : Int), 0 ≤ r ∧ r < m ∧ a ≡ r (MOD m) := by
+  exists_unique
+  · -- Existence
+    apply Exists.intro (a % m)
+    exact mod_cmpl_res m a
+  · -- Uniqueness
+    fix r1 : Int; fix r2 : Int
+    assume h1 : 0 ≤ r1 ∧ r1 < m ∧ a ≡ r1 (MOD m)
+    assume h2 : 0 ≤ r2 ∧ r2 < m ∧ a ≡ r2 (MOD m)
+    have h3 : r1 ≡ r2 (MOD m) :=
+      congr_trans (congr_symm h1.right.right) h2.right.right
+    obtain (d : Int) (h4 : r1 - r2 = m * d) from h3
+    have h5 : r1 - r2 < m * 1 := by linarith
+    have h6 : m * (-1) < r1 - r2 := by linarith
+    rw [h4] at h5
+    rw [h4] at h6
+    have h7 : (↑m : Int) ≥ 0 := Nat.cast_nonneg m
+    have h8 : d < 1 := lt_of_mul_lt_mul_of_nonneg_left h5 h7
+    have h9 : -1 < d := lt_of_mul_lt_mul_of_nonneg_left h6 h7
+    have h10 : d = 0 := by linarith
+    show r1 = r2 from
+      calc r1
+        _ = r1 - r2 + r2 := by ring
+        _ = m * 0 + r2 := by rw [h4, h10]
+        _ = r2 := by ring
+  done
+
+/-
+Note that we call lemmas that use the `NeZero m` hypothesis but we
+don't need to pass it on as it is an implicit argument.
+
+We now immediately have the following.
+-/
+
+lemma cc_eq_mod' (m : Nat) (a : Int) : [a]_m = [a % m]_m :=
+  (cc_eq_iff_congr m a (a % m)).rtl (congr_mod_mod m a)
+
+/-
+We now prove a couple of properties of modular arithmetic.
+-/
+
+theorem Theorem_7_3_6_1' {m : Nat} (X Y : ZMod m) : X + Y = Y + X := by
+  obtain (a : Int) (h1 : X = [a]_m) from cc_rep X
+  obtain (b : Int) (h2 : Y = [b]_m) from cc_rep Y
+  rewrite [h1, h2]
+  have h3 : a + b = b + a := by ring
+  show [a]_m + [b]_m = [b]_m + [a]_m from
+    calc [a]_m + [b]_m
+      _ = [a + b]_m := add_class m a b
+      _ = [b + a]_m := by rw [h3]
+      _ = [b]_m + [a]_m := (add_class m b a).symm
+  done
+
+theorem Theorem_7_3_6_7' {m : Nat} (X : ZMod m) : X * [1]_m = X := by
+  obtain (a : Int) (h1 : X = [a]_m) from cc_rep X
+  rewrite [h1]
+  have h2 : a * 1 = a := by ring
+  show [a]_m * [1]_m = [a]_m from
+    calc [a]_m * [1]_m
+      _ = [a * 1]_m := mul_class m a 1
+      _ = [a]_m := by rw [h2]
+  done
+
+/-
+Thus, `[1]_m` is the multiplicative identity. We can then define
+multiplicative inverses as saying that `Y` is the multiplicative inverse
+of `X` if `X * Y = [1]_m`.
+-/
+
+def invertible' {m : Nat} (X : ZMod m) : Prop :=
+  ∃ (Y : ZMod m), X * Y = [1]_m
+
+/-
+What elements are invertible? We make use of the following exercise
+from Section 2.
+-/
+
+#check Exercise_7_2_6
+-- ∀ (a b : ℕ), rel_prime a b ↔ ∃ (s t : ℤ), s * ↑a + t * ↑b = 1
+
+lemma gcd_c2_inv' {m a : Nat} (h1 : rel_prime m a) :
+    [a]_m * [gcd_c2 m a]_m = [1]_m := by
+  set s : Int := gcd_c1 m a
+  have h2 : s * m + (gcd_c2 m a) * a = gcd m a := gcd_lin_comb a m
+  define at h1
+  rw [h1, Nat.cast_one] at h2
+  rw [mul_class, cc_eq_iff_congr]
+  define
+  apply Exists.intro (-s)
+  show a * gcd_c2 m a - 1 = m * -s from
+    calc a * gcd_c2 m a - 1
+      _ = s * m + (gcd_c2 m a) * a + m * (-s) - 1 := by ring
+      _ = 1 + m * (-s) - 1 := by rw [h2]
+      _ = m * -s := by ring
+  done
+
+theorem Theorem_7_3_7' (m a : Nat) :
+    invertible [a]_m ↔ rel_prime m a := by
+  apply Iff.intro
+  · -- (→)
+    assume h1 : invertible [a]_m
+    define at h1
+    obtain (Y : ZMod m) (h2 : [a]_m * Y = [1]_m) from h1
+    obtain (b : Int) (h3 : Y = [b]_m) from cc_rep Y
+    rw [h3, mul_class, cc_eq_iff_congr] at h2
+    define at h2
+    obtain (c : Int) (h4 : a * b - 1 = m * c) from h2
+    rw [Exercise_7_2_6]
+    apply Exists.intro (-c)
+    apply Exists.intro b
+    show (-c) * m + b * a = 1 from
+      calc (-c) * m + b * a
+        _ = (-c) * m + (a * b - 1) + 1 := by ring
+        _ = (-c) * m + m * c + 1 := by rw [h4]
+        _ = 1 := by ring
+  · -- (←)
+    assume h1 : rel_prime m a
+    define
+    apply Exists.intro ([gcd_c2 m a]_m)
+    exact gcd_c2_inv h1
   done
